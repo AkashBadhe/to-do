@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { storageService } from '../services/StorageService';
-import { Todo, TodoFilter, TodoPriority } from '../types/Todo';
+import { Todo, TodoFilter, TodoPriority, TodoRecurrence } from '../types/Todo';
 
 export const useTodos = () => {
   const [todos, setTodos] = useState<Todo[]>([]);
@@ -84,11 +84,49 @@ export const useTodos = () => {
 
   const toggleTodo = useCallback(async (id: string) => {
     setTodos(currentTodos => {
-      const newTodos = currentTodos.map(todo =>
-        todo.id === id
-          ? { ...todo, completed: !todo.completed, updatedAt: new Date() }
-          : todo
-      );
+      const newTodos: Todo[] = [];
+      for (const todo of currentTodos) {
+        if (todo.id !== id) {
+          newTodos.push(todo);
+          continue;
+        }
+
+        const toggled = { ...todo, completed: !todo.completed, updatedAt: new Date() };
+        newTodos.push(toggled);
+
+        // If marking completed and this is a recurring task, create the next occurrence
+        if (!todo.completed && todo.recurrence && todo.recurrence !== 'none') {
+          const nextDue = (() => {
+            if (!todo.dueDate) return undefined;
+            const d = new Date(todo.dueDate);
+            switch (todo.recurrence as TodoRecurrence) {
+              case 'daily':
+                d.setDate(d.getDate() + 1);
+                return d;
+              case 'weekly':
+                d.setDate(d.getDate() + 7);
+                return d;
+              case 'monthly':
+                d.setMonth(d.getMonth() + 1);
+                return d;
+              default:
+                return undefined;
+            }
+          })();
+
+          if (nextDue) {
+            const nextTodo: Todo = {
+              ...todo,
+              id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+              completed: false,
+              dueDate: nextDue,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            };
+            newTodos.push(nextTodo);
+          }
+        }
+      }
       // Save to storage asynchronously
       storageService.saveTodos(newTodos).catch(error => {
         console.error('Failed to save todos:', error);

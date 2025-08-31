@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, ThemeColors } from '../constants/Colors';
-import { Todo, TodoPriority } from '../types/Todo';
+import { Todo, TodoPriority, TodoRecurrence } from '../types/Todo';
 
 const getPriorityIcon = (priority: TodoPriority): keyof typeof Ionicons.glyphMap => {
   switch (priority) {
@@ -64,6 +64,7 @@ export const TodoForm: React.FC<TodoFormProps> = ({
     todo ? (todo.dueDate ? new Date(todo.dueDate) : undefined) : new Date()
   );
   const [priority, setPriority] = useState<TodoPriority>(todo?.priority || 'medium');
+  const [recurrence, setRecurrence] = useState<TodoRecurrence>(todo?.recurrence || 'none');
   const [titleError, setTitleError] = useState('');
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [tempDate, setTempDate] = useState<Date>(new Date());
@@ -89,7 +90,8 @@ export const TodoForm: React.FC<TodoFormProps> = ({
       title: title.trim(),
       description: description.trim(),
       dueDate,
-      priority,
+  priority,
+  recurrence,
       completed: todo?.completed || false,
     });
   };
@@ -193,6 +195,21 @@ export const TodoForm: React.FC<TodoFormProps> = ({
                     </TouchableOpacity>
                   );
                 })}
+              </View>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Repeat</Text>
+              <View style={styles.recurrenceContainer}>
+                {(['none', 'daily', 'weekly', 'monthly'] as TodoRecurrence[]).map(r => (
+                  <TouchableOpacity
+                    key={r}
+                    style={[styles.recurrenceButton, recurrence === r && styles.recurrenceButtonActive]}
+                    onPress={() => setRecurrence(r)}
+                  >
+                    <Text style={[styles.recurrenceText, recurrence === r && styles.recurrenceTextActive]}>{r === 'none' ? 'None' : r.charAt(0).toUpperCase() + r.slice(1)}</Text>
+                  </TouchableOpacity>
+                ))}
               </View>
             </View>
 
@@ -668,5 +685,33 @@ const createStyles = (colors: ThemeColors) =>
           boxShadow: '0px 2px 6px rgba(0,0,0,0.12)',
         },
       }),
+    },
+    recurrenceContainer: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      gap: 8,
+    },
+    recurrenceButton: {
+      flex: 1,
+      paddingVertical: 10,
+      paddingHorizontal: 8,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: colors.border,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.surface,
+    },
+    recurrenceButtonActive: {
+      backgroundColor: colors.primary,
+      borderColor: colors.primary,
+    },
+    recurrenceText: {
+      color: colors.text,
+      fontWeight: '500',
+    },
+    recurrenceTextActive: {
+      color: colors.background,
+      fontWeight: '600',
     },
   });

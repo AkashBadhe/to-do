@@ -135,6 +135,12 @@ export const TodoItem: React.FC<TodoItemProps> = ({
             size={16}
             color={getPriorityColor(todo.priority, colors)}
           />
+          {todo.recurrence && todo.recurrence !== 'none' && (
+            <View style={styles.recurrenceBadge}>
+              <Ionicons name="repeat" size={14} color={colors.textSecondary} />
+              <Text style={[styles.recurrenceText, { color: colors.textSecondary }]}>{todo.recurrence === 'daily' ? 'Daily' : todo.recurrence === 'weekly' ? 'Weekly' : 'Monthly'}</Text>
+            </View>
+          )}
         </View>
       </View>
 
@@ -241,5 +247,18 @@ const createStyles = (colors: ThemeColors) =>
       flexDirection: 'row',
       alignItems: 'center',
       marginTop: 4,
+    },
+    recurrenceBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginLeft: 8,
+      paddingHorizontal: 6,
+      paddingVertical: 2,
+      borderRadius: 12,
+      backgroundColor: 'transparent',
+    },
+    recurrenceText: {
+      fontSize: 12,
+      marginLeft: 4,
     },
   });

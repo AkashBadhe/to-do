@@ -1,6 +1,6 @@
 import { Platform } from 'react-native';
-import { Todo } from '../types/Todo';
 import { AppSettings } from '../types/App';
+import { Todo } from '../types/Todo';
 
 // Dynamic import for AsyncStorage to avoid bundling issues
 let AsyncStorage: any = null;
@@ -72,6 +72,7 @@ class StorageService {
     const todosJson = JSON.stringify(todos.map(todo => ({
       ...todo,
       dueDate: todo.dueDate?.toISOString(),
+  recurrence: todo.recurrence || 'none',
       createdAt: todo.createdAt.toISOString(),
       updatedAt: todo.updatedAt.toISOString(),
     })));
@@ -87,6 +88,7 @@ class StorageService {
       return todosData.map((todo: any) => ({
         ...todo,
         dueDate: todo.dueDate ? new Date(todo.dueDate) : undefined,
+        recurrence: todo.recurrence || 'none',
         createdAt: new Date(todo.createdAt),
         updatedAt: new Date(todo.updatedAt),
       }));
