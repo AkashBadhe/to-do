@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useColorScheme } from 'react-native';
-import { ColorScheme, AppSettings } from '../types/App';
 import { storageService } from '../services/StorageService';
+import { AppSettings, ColorScheme } from '../types/App';
 
 export const useTheme = () => {
   const systemColorScheme = useColorScheme();
@@ -25,13 +25,21 @@ export const useTheme = () => {
   };
 
   const updateColorScheme = useCallback(async (colorScheme: ColorScheme) => {
-    const newSettings = { ...settings, colorScheme };
-    setSettings(newSettings);
-    await storageService.saveSettings(newSettings);
-  }, [settings]);
+    try {
+      const newSettings = { ...settings, colorScheme };
+      // Update state first for immediate UI feedback
+      setSettings(newSettings);
+      // Then save to storage
+      await storageService.saveSettings(newSettings);
+    } catch (error) {
+      console.error('Failed to update color scheme:', error);
+      // Revert the state change if storage fails
+      setSettings(settings);
+    }
+  }, [settings.colorScheme]); // Use only the colorScheme property to avoid unnecessary re-creations
 
   // Determine the actual color scheme to use
-  const isDark = settings.colorScheme === 'dark' || 
+  const isDark = settings.colorScheme === 'dark' ||
                  (settings.colorScheme === 'auto' && systemColorScheme === 'dark');
 
   return {

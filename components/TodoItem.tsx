@@ -1,15 +1,41 @@
+import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Alert,
-  Platform,
+    Alert,
+    Platform,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { Todo } from '../types/Todo';
 import { Colors, ThemeColors } from '../constants/Colors';
+import { Todo } from '../types/Todo';
+
+const getPriorityColor = (priority: string, colors: ThemeColors): string => {
+  switch (priority) {
+    case 'low':
+      return colors.success;
+    case 'medium':
+      return colors.warning;
+    case 'high':
+      return colors.error;
+    default:
+      return colors.textSecondary;
+  }
+};
+
+const getPriorityIcon = (priority: string): keyof typeof Ionicons.glyphMap => {
+  switch (priority) {
+    case 'low':
+      return 'flag-outline';
+    case 'medium':
+  return 'flag';
+    case 'high':
+  return 'flag';
+    default:
+      return 'help-outline';
+  }
+};
 
 interface TodoItemProps {
   todo: Todo;
@@ -103,6 +129,13 @@ export const TodoItem: React.FC<TodoItemProps> = ({
             {formatDueDate(todo.dueDate)} • {formatDate(todo.dueDate)}
           </Text>
         )}
+        <View style={styles.priorityContainer}>
+          <Ionicons
+            name={getPriorityIcon(todo.priority)}
+            size={16}
+            color={getPriorityColor(todo.priority, colors)}
+          />
+        </View>
       </View>
 
       <View style={styles.actions}>
@@ -203,5 +236,10 @@ const createStyles = (colors: ThemeColors) =>
     actionButton: {
       padding: 8,
       marginLeft: 4,
+    },
+    priorityContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginTop: 4,
     },
   });
