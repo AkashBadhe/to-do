@@ -1,110 +1,323 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import React from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  SafeAreaView,
+  ScrollView,
+  Alert,
+  Platform,
+} from 'react-native';
+import { StatusBar } from 'expo-status-bar';
+import { Ionicons } from '@expo/vector-icons';
 
-import { Collapsible } from '@/components/Collapsible';
-import { ExternalLink } from '@/components/ExternalLink';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-import { IconSymbol } from '@/components/ui/IconSymbol';
+import { useTheme } from '@/hooks/useTheme';
+import { useTodos } from '@/hooks/useTodos';
+import { Colors } from '@/constants/Colors';
+import { ColorScheme } from '@/types/App';
 
-export default function TabTwoScreen() {
+export default function SettingsScreen() {
+  const { isDark, colorScheme, updateColorScheme } = useTheme();
+  const { clearCompleted, totalTodos, completedTodos } = useTodos();
+  const colors = isDark ? Colors.dark : Colors.light;
+  const styles = createStyles(colors);
+
+  const handleThemeChange = (newColorScheme: ColorScheme) => {
+    updateColorScheme(newColorScheme);
+  };
+
+  const handleClearCompleted = () => {
+    if (completedTodos === 0) {
+      if (Platform.OS === 'web') {
+        window.alert('No completed tasks to clear');
+      } else {
+        Alert.alert('No completed tasks to clear');
+      }
+      return;
+    }
+
+    if (Platform.OS === 'web') {
+      if (window.confirm(`Clear ${completedTodos} completed task(s)?`)) {
+        clearCompleted();
+      }
+    } else {
+      Alert.alert(
+        'Clear Completed Tasks',
+        `Are you sure you want to clear ${completedTodos} completed task(s)?`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Clear', style: 'destructive', onPress: clearCompleted },
+        ]
+      );
+    }
+  };
+
+  const themeOptions: { key: ColorScheme; label: string; icon: string }[] = [
+    { key: 'light', label: 'Light', icon: 'sunny' },
+    { key: 'dark', label: 'Dark', icon: 'moon' },
+    { key: 'auto', label: 'System', icon: 'phone-portrait' },
+  ];
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
-      headerImage={
-        <IconSymbol
-          size={310}
-          color="#808080"
-          name="chevron.left.forwardslash.chevron.right"
-          style={styles.headerImage}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Explore</ThemedText>
-      </ThemedView>
-      <ThemedText>This app includes example code to help you get started.</ThemedText>
-      <Collapsible title="File-based routing">
-        <ThemedText>
-          This app has two screens:{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/explore.tsx</ThemedText>
-        </ThemedText>
-        <ThemedText>
-          The layout file in <ThemedText type="defaultSemiBold">app/(tabs)/_layout.tsx</ThemedText>{' '}
-          sets up the tab navigator.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/router/introduction">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Android, iOS, and web support">
-        <ThemedText>
-          You can open this project on Android, iOS, and the web. To open the web version, press{' '}
-          <ThemedText type="defaultSemiBold">w</ThemedText> in the terminal running this project.
-        </ThemedText>
-      </Collapsible>
-      <Collapsible title="Images">
-        <ThemedText>
-          For static images, you can use the <ThemedText type="defaultSemiBold">@2x</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">@3x</ThemedText> suffixes to provide files for
-          different screen densities
-        </ThemedText>
-        <Image source={require('@/assets/images/react-logo.png')} style={{ alignSelf: 'center' }} />
-        <ExternalLink href="https://reactnative.dev/docs/images">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Custom fonts">
-        <ThemedText>
-          Open <ThemedText type="defaultSemiBold">app/_layout.tsx</ThemedText> to see how to load{' '}
-          <ThemedText style={{ fontFamily: 'SpaceMono' }}>
-            custom fonts such as this one.
-          </ThemedText>
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/versions/latest/sdk/font">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Light and dark mode components">
-        <ThemedText>
-          This template has light and dark mode support. The{' '}
-          <ThemedText type="defaultSemiBold">useColorScheme()</ThemedText> hook lets you inspect
-          what the user&apos;s current color scheme is, and so you can adjust UI colors accordingly.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Animations">
-        <ThemedText>
-          This template includes an example of an animated component. The{' '}
-          <ThemedText type="defaultSemiBold">components/HelloWave.tsx</ThemedText> component uses
-          the powerful <ThemedText type="defaultSemiBold">react-native-reanimated</ThemedText>{' '}
-          library to create a waving hand animation.
-        </ThemedText>
-        {Platform.select({
-          ios: (
-            <ThemedText>
-              The <ThemedText type="defaultSemiBold">components/ParallaxScrollView.tsx</ThemedText>{' '}
-              component provides a parallax effect for the header image.
-            </ThemedText>
-          ),
-        })}
-      </Collapsible>
-    </ParallaxScrollView>
+    <SafeAreaView style={styles.container}>
+      <StatusBar style={isDark ? 'light' : 'dark'} />
+      
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Settings</Text>
+          <Text style={styles.headerSubtitle}>Customize your experience</Text>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Appearance</Text>
+          <View style={styles.card}>
+            {themeOptions.map((option) => (
+              <TouchableOpacity
+                key={option.key}
+                style={[
+                  styles.optionItem,
+                  option.key === themeOptions[themeOptions.length - 1].key && styles.lastOptionItem,
+                ]}
+                onPress={() => handleThemeChange(option.key)}
+              >
+                <View style={styles.optionLeft}>
+                  <View style={[
+                    styles.optionIcon,
+                    colorScheme === option.key && styles.selectedOptionIcon,
+                  ]}>
+                    <Ionicons 
+                      name={option.icon as any} 
+                      size={20} 
+                      color={colorScheme === option.key ? colors.background : colors.textSecondary} 
+                    />
+                  </View>
+                  <Text style={[
+                    styles.optionLabel,
+                    colorScheme === option.key && styles.selectedOptionLabel,
+                  ]}>
+                    {option.label}
+                  </Text>
+                </View>
+                {colorScheme === option.key && (
+                  <Ionicons name="checkmark" size={20} color={colors.primary} />
+                )}
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Data</Text>
+          <View style={styles.card}>
+            <View style={styles.statsItem}>
+              <View style={styles.statsLeft}>
+                <View style={styles.statsIcon}>
+                  <Ionicons name="list" size={20} color={colors.primary} />
+                </View>
+                <View>
+                  <Text style={styles.statsLabel}>Total Tasks</Text>
+                  <Text style={styles.statsSubLabel}>All tasks created</Text>
+                </View>
+              </View>
+              <Text style={styles.statsValue}>{totalTodos}</Text>
+            </View>
+            
+            <View style={styles.statsItem}>
+              <View style={styles.statsLeft}>
+                <View style={styles.statsIcon}>
+                  <Ionicons name="checkmark-circle" size={20} color={colors.success} />
+                </View>
+                <View>
+                  <Text style={styles.statsLabel}>Completed Tasks</Text>
+                  <Text style={styles.statsSubLabel}>Tasks you've finished</Text>
+                </View>
+              </View>
+              <Text style={styles.statsValue}>{completedTodos}</Text>
+            </View>
+
+            <TouchableOpacity
+              style={[styles.actionItem, styles.lastOptionItem]}
+              onPress={handleClearCompleted}
+            >
+              <View style={styles.optionLeft}>
+                <View style={[styles.optionIcon, { backgroundColor: colors.error + '20' }]}>
+                  <Ionicons name="trash" size={20} color={colors.error} />
+                </View>
+                <View>
+                  <Text style={[styles.optionLabel, { color: colors.error }]}>
+                    Clear Completed Tasks
+                  </Text>
+                  <Text style={styles.optionSubLabel}>
+                    Remove all completed tasks
+                  </Text>
+                </View>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>About</Text>
+          <View style={styles.card}>
+            <View style={styles.aboutItem}>
+              <Text style={styles.aboutLabel}>Version</Text>
+              <Text style={styles.aboutValue}>1.0.0</Text>
+            </View>
+            <View style={[styles.aboutItem, styles.lastOptionItem]}>
+              <Text style={styles.aboutLabel}>Platform</Text>
+              <Text style={styles.aboutValue}>{Platform.OS}</Text>
+            </View>
+          </View>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
-  headerImage: {
-    color: '#808080',
-    bottom: -90,
-    left: -35,
-    position: 'absolute',
-  },
-  titleContainer: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-});
+const createStyles = (colors: typeof Colors.light) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    scrollView: {
+      flex: 1,
+    },
+    header: {
+      paddingHorizontal: 20,
+      paddingVertical: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    headerTitle: {
+      fontSize: 28,
+      fontWeight: 'bold',
+      color: colors.text,
+    },
+    headerSubtitle: {
+      fontSize: 14,
+      color: colors.textSecondary,
+      marginTop: 2,
+    },
+    section: {
+      marginTop: 24,
+      paddingHorizontal: 20,
+    },
+    sectionTitle: {
+      fontSize: 18,
+      fontWeight: '600',
+      color: colors.text,
+      marginBottom: 12,
+    },
+    card: {
+      backgroundColor: colors.card,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: colors.border,
+      overflow: 'hidden',
+    },
+    optionItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    actionItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    lastOptionItem: {
+      borderBottomWidth: 0,
+    },
+    optionLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    optionIcon: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      backgroundColor: colors.surface,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginRight: 12,
+    },
+    selectedOptionIcon: {
+      backgroundColor: colors.primary,
+    },
+    optionLabel: {
+      fontSize: 16,
+      fontWeight: '500',
+      color: colors.text,
+    },
+    selectedOptionLabel: {
+      color: colors.text,
+      fontWeight: '600',
+    },
+    optionSubLabel: {
+      fontSize: 12,
+      color: colors.textSecondary,
+      marginTop: 2,
+    },
+    statsItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    statsLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    statsIcon: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      backgroundColor: colors.surface,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginRight: 12,
+    },
+    statsLabel: {
+      fontSize: 16,
+      fontWeight: '500',
+      color: colors.text,
+    },
+    statsSubLabel: {
+      fontSize: 12,
+      color: colors.textSecondary,
+      marginTop: 2,
+    },
+    statsValue: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      color: colors.primary,
+    },
+    aboutItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    aboutLabel: {
+      fontSize: 16,
+      fontWeight: '500',
+      color: colors.text,
+    },
+    aboutValue: {
+      fontSize: 16,
+      color: colors.textSecondary,
+    },
+  });
