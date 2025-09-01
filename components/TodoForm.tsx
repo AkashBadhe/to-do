@@ -65,9 +65,15 @@ export const TodoForm: React.FC<TodoFormProps> = ({
   );
   const [priority, setPriority] = useState<TodoPriority>(todo?.priority || 'medium');
   const [recurrence, setRecurrence] = useState<TodoRecurrence>(todo?.recurrence || 'none');
+  const [isRepeat, setIsRepeat] = useState<boolean>(todo?.recurrence !== 'none' && todo?.recurrence !== undefined);
+  const [customInterval, setCustomInterval] = useState<number>(todo?.customInterval || 1);
+  const [endDate, setEndDate] = useState<Date | undefined>(todo?.endDate);
+  const [hasReminder, setHasReminder] = useState<boolean>(todo?.hasReminder || false);
+  const [reminderTime, setReminderTime] = useState<string>(todo?.reminderTime || '09:00');
   const [titleError, setTitleError] = useState('');
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [tempDate, setTempDate] = useState<Date>(new Date());
+  const [datePickerType, setDatePickerType] = useState<'due' | 'end'>('due');
 
   const formatDate = (date: Date) => {
     if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
@@ -90,8 +96,12 @@ export const TodoForm: React.FC<TodoFormProps> = ({
       title: title.trim(),
       description: description.trim(),
       dueDate,
-  priority,
-  recurrence,
+      priority,
+      recurrence: isRepeat ? recurrence : 'none',
+      customInterval: (isRepeat && recurrence === 'custom') ? customInterval : undefined,
+      endDate,
+      hasReminder,
+      reminderTime: hasReminder ? reminderTime : undefined,
       completed: todo?.completed || false,
     });
   };
@@ -99,11 +109,16 @@ export const TodoForm: React.FC<TodoFormProps> = ({
   const addDueDate = () => {
     const today = new Date();
     setTempDate(dueDate && dueDate instanceof Date && !isNaN(dueDate.getTime()) ? dueDate : today);
+    setDatePickerType('due');
     setShowDatePicker(true);
   };
 
   const confirmDateSelection = () => {
-    setDueDate(tempDate);
+    if (datePickerType === 'due') {
+      setDueDate(tempDate);
+    } else if (datePickerType === 'end') {
+      setEndDate(tempDate);
+    }
     setShowDatePicker(false);
   };
 
@@ -135,7 +150,7 @@ export const TodoForm: React.FC<TodoFormProps> = ({
         style={styles.keyboardAvoidingView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false} contentInset={{ bottom: (insets.bottom || 0) + 100 }}>
           <View style={styles.header}>
             <Text style={styles.headerTitle}>
               {todo ? 'Edit Task' : 'Add New Task'}
@@ -200,21 +215,63 @@ export const TodoForm: React.FC<TodoFormProps> = ({
 
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Repeat</Text>
-              <View style={styles.recurrenceContainer}>
-                {(['none', 'daily', 'weekly', 'monthly'] as TodoRecurrence[]).map(r => (
-                  <TouchableOpacity
-                    key={r}
-                    style={[styles.recurrenceButton, recurrence === r && styles.recurrenceButtonActive]}
-                    onPress={() => setRecurrence(r)}
-                  >
-                    <Text style={[styles.recurrenceText, recurrence === r && styles.recurrenceTextActive]}>{r === 'none' ? 'None' : r.charAt(0).toUpperCase() + r.slice(1)}</Text>
-                  </TouchableOpacity>
-                ))}
+              <View style={styles.switchContainer}>
+                <TouchableOpacity
+                  style={[styles.switch, isRepeat && styles.switchActive]}
+                  onPress={() => {
+                    setIsRepeat(!isRepeat);
+                    if (!isRepeat) {
+                      // When enabling repeat, set to daily if none
+                      if (recurrence === 'none') setRecurrence('daily');
+                    } else {
+                      // When disabling, set to none
+                      setRecurrence('none');
+                    }
+                  }}
+                >
+                  <View style={[styles.switchKnob, isRepeat && styles.switchKnobActive]} />
+                </TouchableOpacity>
+                <Text style={styles.switchLabel}>Enable repeat</Text>
               </View>
+              {isRepeat && (
+                <View style={styles.recurrenceContainer}>
+                  {(['daily', 'weekly', 'monthly', 'custom'] as TodoRecurrence[]).map(r => (
+                    <TouchableOpacity
+                      key={r}
+                      style={[styles.recurrenceButton, recurrence === r && styles.recurrenceButtonActive]}
+                      onPress={() => setRecurrence(r)}
+                    >
+                      <Text style={[styles.recurrenceText, recurrence === r && styles.recurrenceTextActive]}>
+                        {r === 'custom' ? 'Custom' : r.charAt(0).toUpperCase() + r.slice(1)}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+              {isRepeat && recurrence === 'custom' && (
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Custom Interval (days)</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={customInterval.toString()}
+                    onChangeText={(text) => {
+                      const num = parseInt(text, 10);
+                      if (!isNaN(num) && num > 0) {
+                        setCustomInterval(num);
+                      }
+                    }}
+                    placeholder="Enter number of days"
+                    placeholderTextColor={colors.textSecondary}
+                    keyboardType="numeric"
+                  />
+                </View>
+              )}
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Due Date</Text>
+              <Text style={styles.label}>
+                Due Date {isRepeat ? '(First occurrence)' : ''}
+              </Text>
               {dueDate ? (
                 <View style={styles.dueDateContainer}>
                   <TouchableOpacity
@@ -224,6 +281,7 @@ export const TodoForm: React.FC<TodoFormProps> = ({
                         ? dueDate
                         : new Date();
                       setTempDate(dateToEdit);
+                      setDatePickerType('due');
                       setShowDatePicker(true);
                     }}
                   >
@@ -252,9 +310,52 @@ export const TodoForm: React.FC<TodoFormProps> = ({
                 </TouchableOpacity>
               )}
             </View>
+
+            {isRepeat && (
+              <>
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>End Date (optional)</Text>
+                  <TouchableOpacity
+                    style={styles.addDateButton}
+                    onPress={() => {
+                      setTempDate(endDate || new Date());
+                      setDatePickerType('end');
+                      setShowDatePicker(true);
+                    }}
+                  >
+                    <Ionicons name="calendar-outline" size={20} color={colors.primary} />
+                    <Text style={styles.addDateText}>
+                      {endDate ? formatDate(endDate) : 'Set end date'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Reminder</Text>
+              <View style={styles.switchContainer}>
+                <TouchableOpacity
+                  style={[styles.switch, hasReminder && styles.switchActive]}
+                  onPress={() => setHasReminder(!hasReminder)}
+                >
+                  <View style={[styles.switchKnob, hasReminder && styles.switchKnobActive]} />
+                </TouchableOpacity>
+                <Text style={styles.switchLabel}>Enable reminder</Text>
+              </View>
+              {hasReminder && (
+                <TextInput
+                  style={styles.input}
+                  value={reminderTime}
+                  onChangeText={setReminderTime}
+                  placeholder="HH:MM"
+                  placeholderTextColor={colors.textSecondary}
+                />
+              )}
+            </View>
           </View>
 
-          <View style={styles.actions}>
+          <View style={[styles.actions, { paddingBottom: (insets.bottom || 0) + 20 }]}>
             <TouchableOpacity style={styles.cancelButton} onPress={onCancel}>
               <Text style={styles.cancelButtonText}>Cancel</Text>
             </TouchableOpacity>
@@ -713,5 +814,35 @@ const createStyles = (colors: ThemeColors) =>
     recurrenceTextActive: {
       color: colors.background,
       fontWeight: '600',
+    },
+    switchContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 12,
+    },
+    switch: {
+      width: 50,
+      height: 28,
+      borderRadius: 14,
+      backgroundColor: colors.border,
+      justifyContent: 'center',
+      paddingHorizontal: 2,
+    },
+    switchActive: {
+      backgroundColor: colors.primary,
+    },
+    switchKnob: {
+      width: 24,
+      height: 24,
+      borderRadius: 12,
+      backgroundColor: colors.surface,
+    },
+    switchKnobActive: {
+      transform: [{ translateX: 22 }],
+    },
+    switchLabel: {
+      fontSize: 16,
+      color: colors.text,
+      marginLeft: 12,
     },
   });

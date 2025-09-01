@@ -102,19 +102,27 @@ export const useTodos = () => {
             switch (todo.recurrence as TodoRecurrence) {
               case 'daily':
                 d.setDate(d.getDate() + 1);
-                return d;
+                break;
               case 'weekly':
                 d.setDate(d.getDate() + 7);
-                return d;
+                break;
               case 'monthly':
                 d.setMonth(d.getMonth() + 1);
-                return d;
+                break;
+              case 'custom':
+                if (todo.customInterval) {
+                  d.setDate(d.getDate() + todo.customInterval);
+                } else {
+                  return undefined;
+                }
+                break;
               default:
                 return undefined;
             }
+            return d;
           })();
 
-          if (nextDue) {
+          if (nextDue && (!todo.endDate || nextDue <= todo.endDate)) {
             const nextTodo: Todo = {
               ...todo,
               id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
