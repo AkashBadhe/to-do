@@ -22,12 +22,21 @@ export default function TabLayout() {
           headerShown: false,
           tabBarButton: HapticTab,
           tabBarBackground: TabBarBackground,
+          tabBarLabelStyle: {
+            fontSize: 16,
+            fontWeight: '600',
+          },
+          tabBarItemStyle: {
+            paddingVertical: 1,
+            paddingHorizontal: 8,
+          },
           tabBarStyle: Platform.select({
             ios: {
               // Use a transparent background on iOS to show the blur effect
               position: 'absolute',
             },
-            default: {},
+            default: {
+            },
           }),
         }}>
         <Tabs.Screen
