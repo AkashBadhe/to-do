@@ -36,22 +36,37 @@ A modern, feature-rich task management application built with React Native and E
 ## 📸 Screenshots
 
 ### Task Management
-![Task List](./assets/screenshots/Phone-1.jpg)
-*Main task list with priority indicators and due dates*
+<div align="center">
+  <img src="./assets/screenshots/Phone-1.jpg" alt="Task List" width="250" style="border-radius: 20px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);"/>
+  <br/>
+  <em>Main task list with priority indicators and due dates</em>
+</div>
 
-![Add New Task](./assets/screenshots/Phone-2.jpg)
-*Create new tasks with all available options*
+<div align="center">
+  <img src="./assets/screenshots/Phone-2.jpg" alt="Add New Task" width="250" style="border-radius: 20px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);"/>
+  <br/>
+  <em>Create new tasks with all available options</em>
+</div>
 
 ### Recurring Tasks
-![Recurring Setup](./assets/screenshots/Phone-3.jpg)
-*Configure recurring tasks with custom intervals*
+<div align="center">
+  <img src="./assets/screenshots/Phone-3.jpg" alt="Recurring Setup" width="250" style="border-radius: 20px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);"/>
+  <br/>
+  <em>Configure recurring tasks with custom intervals</em>
+</div>
 
-![Task Details](./assets/screenshots/Phone-4.jpg)
-*View detailed task information including recurrence*
+<div align="center">
+  <img src="./assets/screenshots/Phone-4.jpg" alt="Task Details" width="250" style="border-radius: 20px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);"/>
+  <br/>
+  <em>View detailed task information including recurrence</em>
+</div>
 
 ### Settings & Themes
-![Settings](./assets/screenshots/Phone-5.jpg)
-*App settings and theme preferences*
+<div align="center">
+  <img src="./assets/screenshots/Phone-5.jpg" alt="Settings" width="250" style="border-radius: 20px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);"/>
+  <br/>
+  <em>App settings and theme preferences</em>
+</div>
 
 ## 🚀 Getting Started
 
