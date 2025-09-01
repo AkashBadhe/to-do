@@ -2,8 +2,6 @@
 
 A modern, feature-rich task management application built with React Native and Expo. Stay organized and productive with intelligent task scheduling, recurring tasks, and a beautiful, intuitive interface.
 
-![App Preview](./assets/screenshots/Phone-1.jpg)
-
 ## ✨ Features
 
 ### 🏷️ Task Management
@@ -35,7 +33,7 @@ A modern, feature-rich task management application built with React Native and E
 
 ## 📸 Screenshots
 
-### Task Management
+### Dark Theme
 <table>
   <tr>
     <td align="center">
@@ -48,41 +46,30 @@ A modern, feature-rich task management application built with React Native and E
       <br/>
       <em>Add new task</em>
     </td>
-  </tr>
-  <tr>
-    <td align="center" colspan="2">
-      <em>Priority indicators • Due dates • Task completion</em>
-    </td>
-  </tr>
-</table>
-
-### Recurring Tasks
-<table>
-  <tr>
     <td align="center">
       <img src="./assets/screenshots/Phone-3.jpg" alt="Recurring Setup" width="200" style="border-radius: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);"/>
       <br/>
-      <em>Configure recurrence</em>
-    </td>
-    <td align="center">
-      <img src="./assets/screenshots/Phone-4.jpg" alt="Task Details" width="200" style="border-radius: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);"/>
-      <br/>
-      <em>Task details & recurrence info</em>
-    </td>
-  </tr>
-  <tr>
-    <td align="center" colspan="2">
-      <em>Daily • Weekly • Monthly • Custom intervals • End dates</em>
+      <em>Settings Page</em>
     </td>
   </tr>
 </table>
 
-### Settings & Themes
-<div align="center">
-  <img src="./assets/screenshots/Phone-5.jpg" alt="Settings" width="200" style="border-radius: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);"/>
-  <br/>
-  <em>Settings & theme preferences</em>
-</div>
+### Light Theme
+
+<table>
+  <tr>
+    <td align="center">
+      <img src="./assets/screenshots/Phone-4.jpg" alt="Task List" width="200" style="border-radius: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);"/>
+      <br/>
+      <em>Main task list</em>
+    </td>
+    <td align="center">
+      <img src="./assets/screenshots/Phone-5.jpg" alt="Add New Task" width="200" style="border-radius: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);"/>
+      <br/>
+      <em>Add new task</em>
+    </td>
+  </tr>
+</table>
 
 ## 🚀 Getting Started
 
