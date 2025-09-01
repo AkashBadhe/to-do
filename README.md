@@ -36,36 +36,52 @@ A modern, feature-rich task management application built with React Native and E
 ## 📸 Screenshots
 
 ### Task Management
-<div align="center">
-  <img src="./assets/screenshots/Phone-1.jpg" alt="Task List" width="250" style="border-radius: 20px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);"/>
-  <br/>
-  <em>Main task list with priority indicators and due dates</em>
-</div>
-
-<div align="center">
-  <img src="./assets/screenshots/Phone-2.jpg" alt="Add New Task" width="250" style="border-radius: 20px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);"/>
-  <br/>
-  <em>Create new tasks with all available options</em>
-</div>
+<table>
+  <tr>
+    <td align="center">
+      <img src="./assets/screenshots/Phone-1.jpg" alt="Task List" width="200" style="border-radius: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);"/>
+      <br/>
+      <em>Main task list</em>
+    </td>
+    <td align="center">
+      <img src="./assets/screenshots/Phone-2.jpg" alt="Add New Task" width="200" style="border-radius: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);"/>
+      <br/>
+      <em>Add new task</em>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" colspan="2">
+      <em>Priority indicators • Due dates • Task completion</em>
+    </td>
+  </tr>
+</table>
 
 ### Recurring Tasks
-<div align="center">
-  <img src="./assets/screenshots/Phone-3.jpg" alt="Recurring Setup" width="250" style="border-radius: 20px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);"/>
-  <br/>
-  <em>Configure recurring tasks with custom intervals</em>
-</div>
-
-<div align="center">
-  <img src="./assets/screenshots/Phone-4.jpg" alt="Task Details" width="250" style="border-radius: 20px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);"/>
-  <br/>
-  <em>View detailed task information including recurrence</em>
-</div>
+<table>
+  <tr>
+    <td align="center">
+      <img src="./assets/screenshots/Phone-3.jpg" alt="Recurring Setup" width="200" style="border-radius: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);"/>
+      <br/>
+      <em>Configure recurrence</em>
+    </td>
+    <td align="center">
+      <img src="./assets/screenshots/Phone-4.jpg" alt="Task Details" width="200" style="border-radius: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);"/>
+      <br/>
+      <em>Task details & recurrence info</em>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" colspan="2">
+      <em>Daily • Weekly • Monthly • Custom intervals • End dates</em>
+    </td>
+  </tr>
+</table>
 
 ### Settings & Themes
 <div align="center">
-  <img src="./assets/screenshots/Phone-5.jpg" alt="Settings" width="250" style="border-radius: 20px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);"/>
+  <img src="./assets/screenshots/Phone-5.jpg" alt="Settings" width="200" style="border-radius: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);"/>
   <br/>
-  <em>App settings and theme preferences</em>
+  <em>Settings & theme preferences</em>
 </div>
 
 ## 🚀 Getting Started
