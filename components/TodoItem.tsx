@@ -129,6 +129,16 @@ export const TodoItem: React.FC<TodoItemProps> = ({
             {formatDueDate(todo.dueDate)} • {formatDate(todo.dueDate)}
           </Text>
         )}
+        {todo.endDate && (
+          <Text style={[styles.dueDate, todo.completed && styles.completedText]}>
+            Ends: {formatDate(todo.endDate)}
+          </Text>
+        )}
+        {todo.hasReminder && (
+          <Text style={[styles.dueDate, todo.completed && styles.completedText]}>
+            Reminder: {todo.reminderTime}
+          </Text>
+        )}
         <View style={styles.priorityContainer}>
           <Ionicons
             name={getPriorityIcon(todo.priority)}
@@ -138,7 +148,12 @@ export const TodoItem: React.FC<TodoItemProps> = ({
           {todo.recurrence && todo.recurrence !== 'none' && (
             <View style={styles.recurrenceBadge}>
               <Ionicons name="repeat" size={14} color={colors.textSecondary} />
-              <Text style={[styles.recurrenceText, { color: colors.textSecondary }]}>{todo.recurrence === 'daily' ? 'Daily' : todo.recurrence === 'weekly' ? 'Weekly' : 'Monthly'}</Text>
+              <Text style={[styles.recurrenceText, { color: colors.textSecondary }]}>
+                {todo.recurrence === 'daily' ? 'Daily' :
+                 todo.recurrence === 'weekly' ? 'Weekly' :
+                 todo.recurrence === 'monthly' ? 'Monthly' :
+                 `Every ${todo.customInterval} days`}
+              </Text>
             </View>
           )}
         </View>

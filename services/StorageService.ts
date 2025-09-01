@@ -72,7 +72,8 @@ class StorageService {
     const todosJson = JSON.stringify(todos.map(todo => ({
       ...todo,
       dueDate: todo.dueDate?.toISOString(),
-  recurrence: todo.recurrence || 'none',
+      recurrence: todo.recurrence || 'none',
+      endDate: todo.endDate?.toISOString(),
       createdAt: todo.createdAt.toISOString(),
       updatedAt: todo.updatedAt.toISOString(),
     })));
@@ -89,6 +90,8 @@ class StorageService {
         ...todo,
         dueDate: todo.dueDate ? new Date(todo.dueDate) : undefined,
         recurrence: todo.recurrence || 'none',
+        endDate: todo.endDate ? new Date(todo.endDate) : undefined,
+        hasReminder: todo.hasReminder || false,
         createdAt: new Date(todo.createdAt),
         updatedAt: new Date(todo.updatedAt),
       }));
