@@ -1,27 +1,35 @@
-import React from 'react';
+import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
+import { StatusBar } from 'expo-status-bar';
+import React, { useCallback } from 'react';
 import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  SafeAreaView,
-  ScrollView,
   Alert,
   Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { StatusBar } from 'expo-status-bar';
-import { Ionicons } from '@expo/vector-icons';
 
-import { useTheme } from '@/hooks/useTheme';
-import { useTodos } from '@/hooks/useTodos';
 import { Colors } from '@/constants/Colors';
+import { useTheme } from '@/hooks/ThemeContext';
+import { useTodos } from '@/hooks/useTodos';
 import { ColorScheme } from '@/types/App';
 
 export default function SettingsScreen() {
   const { isDark, colorScheme, updateColorScheme } = useTheme();
-  const { clearCompleted, totalTodos, completedTodos } = useTodos();
+  const { clearCompleted, totalTodos, completedTodos, refreshTodos } = useTodos();
   const colors = isDark ? Colors.dark : Colors.light;
   const styles = createStyles(colors);
+
+  // Refresh data when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+  // Ensure statistics are refreshed when the screen gains focus
+  refreshTodos();
+    }, [])
+  );
 
   const handleThemeChange = (newColorScheme: ColorScheme) => {
     updateColorScheme(newColorScheme);
@@ -40,6 +48,8 @@ export default function SettingsScreen() {
     if (Platform.OS === 'web') {
       if (window.confirm(`Clear ${completedTodos} completed task(s)?`)) {
         clearCompleted();
+        // Immediately refresh stats
+        refreshTodos();
       }
     } else {
       Alert.alert(
@@ -47,7 +57,7 @@ export default function SettingsScreen() {
         `Are you sure you want to clear ${completedTodos} completed task(s)?`,
         [
           { text: 'Cancel', style: 'cancel' },
-          { text: 'Clear', style: 'destructive', onPress: clearCompleted },
+          { text: 'Clear', style: 'destructive', onPress: () => { clearCompleted(); refreshTodos(); } },
         ]
       );
     }
@@ -60,7 +70,7 @@ export default function SettingsScreen() {
   ];
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <StatusBar style={isDark ? 'light' : 'dark'} />
       
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
@@ -172,7 +182,7 @@ export default function SettingsScreen() {
           </View>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -187,7 +197,8 @@ const createStyles = (colors: typeof Colors.light) =>
     },
     header: {
       paddingHorizontal: 20,
-      paddingVertical: 16,
+      paddingTop: 24,
+      paddingBottom: 16,
       borderBottomWidth: 1,
       borderBottomColor: colors.border,
     },

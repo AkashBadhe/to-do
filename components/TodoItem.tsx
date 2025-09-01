@@ -1,15 +1,41 @@
+import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Alert,
-  Platform,
+    Alert,
+    Platform,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { Todo } from '../types/Todo';
 import { Colors, ThemeColors } from '../constants/Colors';
+import { Todo } from '../types/Todo';
+
+const getPriorityColor = (priority: string, colors: ThemeColors): string => {
+  switch (priority) {
+    case 'low':
+      return colors.success;
+    case 'medium':
+      return colors.warning;
+    case 'high':
+      return colors.error;
+    default:
+      return colors.textSecondary;
+  }
+};
+
+const getPriorityIcon = (priority: string): keyof typeof Ionicons.glyphMap => {
+  switch (priority) {
+    case 'low':
+      return 'flag-outline';
+    case 'medium':
+  return 'flag';
+    case 'high':
+  return 'flag';
+    default:
+      return 'help-outline';
+  }
+};
 
 interface TodoItemProps {
   todo: Todo;
@@ -103,6 +129,34 @@ export const TodoItem: React.FC<TodoItemProps> = ({
             {formatDueDate(todo.dueDate)} • {formatDate(todo.dueDate)}
           </Text>
         )}
+        {todo.endDate && (
+          <Text style={[styles.dueDate, todo.completed && styles.completedText]}>
+            Ends: {formatDate(todo.endDate)}
+          </Text>
+        )}
+        {todo.hasReminder && (
+          <Text style={[styles.dueDate, todo.completed && styles.completedText]}>
+            Reminder: {todo.reminderTime}
+          </Text>
+        )}
+        <View style={styles.priorityContainer}>
+          <Ionicons
+            name={getPriorityIcon(todo.priority)}
+            size={16}
+            color={getPriorityColor(todo.priority, colors)}
+          />
+          {todo.recurrence && todo.recurrence !== 'none' && (
+            <View style={styles.recurrenceBadge}>
+              <Ionicons name="repeat" size={14} color={colors.textSecondary} />
+              <Text style={[styles.recurrenceText, { color: colors.textSecondary }]}>
+                {todo.recurrence === 'daily' ? 'Daily' :
+                 todo.recurrence === 'weekly' ? 'Weekly' :
+                 todo.recurrence === 'monthly' ? 'Monthly' :
+                 `Every ${todo.customInterval} days`}
+              </Text>
+            </View>
+          )}
+        </View>
       </View>
 
       <View style={styles.actions}>
@@ -202,6 +256,24 @@ const createStyles = (colors: ThemeColors) =>
     },
     actionButton: {
       padding: 8,
+      marginLeft: 4,
+    },
+    priorityContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginTop: 4,
+    },
+    recurrenceBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginLeft: 8,
+      paddingHorizontal: 6,
+      paddingVertical: 2,
+      borderRadius: 12,
+      backgroundColor: 'transparent',
+    },
+    recurrenceText: {
+      fontSize: 12,
       marginLeft: 4,
     },
   });

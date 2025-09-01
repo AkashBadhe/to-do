@@ -1,23 +1,23 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  FlatList,
-  TouchableOpacity,
-  StyleSheet,
-  SafeAreaView,
-  RefreshControl,
-  Platform,
-} from 'react-native';
-import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import { router } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import React, { useCallback, useState } from 'react';
+import {
+  FlatList,
+  Platform,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
-import { useTodos } from '@/hooks/useTodos';
-import { useTheme } from '@/hooks/useTheme';
-import { TodoItem } from '@/components/TodoItem';
 import { FilterTabs } from '@/components/FilterTabs';
+import { TodoItem } from '@/components/TodoItem';
 import { Colors } from '@/constants/Colors';
+import { useTheme } from '@/hooks/ThemeContext';
+import { useTodos } from '@/hooks/useTodos';
 import { Todo } from '@/types/Todo';
 
 export default function TodoListScreen() {
@@ -39,6 +39,14 @@ export default function TodoListScreen() {
   const styles = createStyles(colors);
 
   const [refreshing, setRefreshing] = useState(false);
+
+  // Refresh todos when screen comes into focus (e.g., when returning from add-todo modal)
+  useFocusEffect(
+    useCallback(() => {
+      // Force a refresh of todos when screen is focused
+      refreshTodos();
+    }, [refreshTodos]) // Now safe to include since refreshTodos is memoized
+  );
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -100,7 +108,7 @@ export default function TodoListScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <StatusBar style={isDark ? 'light' : 'dark'} />
       
       <View style={styles.header}>
@@ -149,7 +157,7 @@ export default function TodoListScreen() {
         }
         ListEmptyComponent={renderEmptyState}
       />
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -164,7 +172,8 @@ const createStyles = (colors: typeof Colors.light) =>
       justifyContent: 'space-between',
       alignItems: 'center',
       paddingHorizontal: 20,
-      paddingVertical: 16,
+      paddingTop: 24,
+      paddingBottom: 16,
       borderBottomWidth: 1,
       borderBottomColor: colors.border,
     },
