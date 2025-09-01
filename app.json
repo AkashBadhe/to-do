@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "to-do",
-    "slug": "to-do",
+    "name": "time-box",
+    "slug": "time-box",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -16,9 +16,9 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-  "edgeToEdgeEnabled": true,
-  "package": "com.yourdomain.todo",
-  "versionCode": 1
+      "edgeToEdgeEnabled": true,
+      "package": "com.yourdomain.todo",
+      "versionCode": 1
     },
     "web": {
       "bundler": "metro",
@@ -39,6 +39,12 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "ad11960d-d106-4b16-851f-bb8027b1675f"
+      }
     }
   }
 }

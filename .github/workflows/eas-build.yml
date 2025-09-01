@@ -1,0 +1,52 @@
+name: EAS Android Build
+
+on:
+  push:
+    branches: [ main, master, dev ]
+  workflow_dispatch:
+
+jobs:
+  build-android:
+    name: Build Android AAB (EAS)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install EAS CLI
+        run: npm install -g eas-cli
+
+      - name: Decode Google service account (optional)
+        if: secrets.GOOGLE_SERVICE_ACCOUNT_JSON != ''
+        run: |
+          echo "$GOOGLE_SERVICE_ACCOUNT_JSON" | base64 --decode > ${{ github.workspace }}/google-service-account.json
+
+      - name: Login to EAS
+        env:
+          EAS_TOKEN: ${{ secrets.EAS_TOKEN }}
+        run: |
+          eas whoami || eas login --token "$EAS_TOKEN"
+
+      - name: Configure Google Play service account (optional)
+        if: secrets.GOOGLE_SERVICE_ACCOUNT_JSON != ''
+        run: |
+          eas credentials:import --platform android --service-account-file ./google-service-account.json || true
+
+      - name: Run EAS build (Android AAB)
+        env:
+          EAS_BUILD_AUTOMATED: '1'
+        run: |
+          eas build --platform android --profile production --non-interactive
+
+      - name: Upload build artifact (if available)
+        if: always()
+        run: |
+          echo "Build finished. Check EAS build logs or artifacts in the EAS dashboard."
