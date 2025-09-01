@@ -2,8 +2,6 @@
 
 A modern, feature-rich task management application built with React Native and Expo. Stay organized and productive with intelligent task scheduling, recurring tasks, and a beautiful, intuitive interface.
 
-![App Preview](./assets/screenshots/Phone-1.jpg)
-
 ## ✨ Features
 
 ### 🏷️ Task Management
@@ -35,23 +33,43 @@ A modern, feature-rich task management application built with React Native and E
 
 ## 📸 Screenshots
 
-### Task Management
-![Task List](./assets/screenshots/Phone-1.jpg)
-*Main task list with priority indicators and due dates*
+### Dark Theme
+<table>
+  <tr>
+    <td align="center">
+      <img src="./assets/screenshots/Phone-1.jpg" alt="Task List" width="200" style="border-radius: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);"/>
+      <br/>
+      <em>Main task list</em>
+    </td>
+    <td align="center">
+      <img src="./assets/screenshots/Phone-2.jpg" alt="Add New Task" width="200" style="border-radius: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);"/>
+      <br/>
+      <em>Add new task</em>
+    </td>
+    <td align="center">
+      <img src="./assets/screenshots/Phone-3.jpg" alt="Recurring Setup" width="200" style="border-radius: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);"/>
+      <br/>
+      <em>Settings Page</em>
+    </td>
+  </tr>
+</table>
 
-![Add New Task](./assets/screenshots/Phone-2.jpg)
-*Create new tasks with all available options*
+### Light Theme
 
-### Recurring Tasks
-![Recurring Setup](./assets/screenshots/Phone-3.jpg)
-*Configure recurring tasks with custom intervals*
-
-![Task Details](./assets/screenshots/Phone-4.jpg)
-*View detailed task information including recurrence*
-
-### Settings & Themes
-![Settings](./assets/screenshots/Phone-5.jpg)
-*App settings and theme preferences*
+<table>
+  <tr>
+    <td align="center">
+      <img src="./assets/screenshots/Phone-4.jpg" alt="Task List" width="200" style="border-radius: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);"/>
+      <br/>
+      <em>Main task list</em>
+    </td>
+    <td align="center">
+      <img src="./assets/screenshots/Phone-5.jpg" alt="Add New Task" width="200" style="border-radius: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);"/>
+      <br/>
+      <em>Add new task</em>
+    </td>
+  </tr>
+</table>
 
 ## 🚀 Getting Started
 
