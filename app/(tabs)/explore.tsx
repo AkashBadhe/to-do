@@ -197,7 +197,7 @@ const createStyles = (colors: typeof Colors.light) =>
     },
     header: {
       paddingHorizontal: 20,
-      paddingTop: 24,
+      paddingTop: 0,
       paddingBottom: 16,
       borderBottomWidth: 1,
       borderBottomColor: colors.border,

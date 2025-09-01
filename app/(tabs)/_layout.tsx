@@ -1,11 +1,8 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
-import { Platform } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { HapticTab } from '@/components/HapticTab';
 import { IconSymbol } from '@/components/ui/IconSymbol';
-import TabBarBackground from '@/components/ui/TabBarBackground';
 import { Colors } from '@/constants/Colors';
 import { useTheme } from '@/hooks/ThemeContext';
 
@@ -18,27 +15,20 @@ export default function TabLayout() {
   <SafeAreaView style={{ flex: 1, backgroundColor: Colors[colorScheme].background, paddingTop: (insets.top || 0)}}>
       <Tabs
         screenOptions={{
-          tabBarActiveTintColor: Colors[colorScheme].tint,
-          headerShown: false,
-          tabBarButton: HapticTab,
-          tabBarBackground: TabBarBackground,
-          tabBarLabelStyle: {
-            fontSize: 16,
-            fontWeight: '600',
-          },
-          tabBarItemStyle: {
-            paddingVertical: 1,
-            paddingHorizontal: 8,
-          },
-          tabBarStyle: Platform.select({
-            ios: {
-              // Use a transparent background on iOS to show the blur effect
-              position: 'absolute',
-            },
-            default: {
-            },
-          }),
-        }}>
+        headerShown: false,
+        tabBarShowLabel: true,  // ensure labels are visible
+        tabBarStyle: {
+          height: 65,           // reduced height for more compact tabs
+          paddingBottom: 3,
+          paddingTop: 3,
+        },
+        tabBarLabelStyle: {
+          fontSize: 11,         // smaller text but still readable
+        },
+        tabBarIconStyle: {
+          marginBottom: 2,     // better spacing between icon and text
+        },
+      }}>
         <Tabs.Screen
           name="index"
           options={{

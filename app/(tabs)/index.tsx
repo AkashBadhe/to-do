@@ -2,8 +2,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import {
+  Dimensions,
   FlatList,
   Platform,
   RefreshControl,
@@ -42,6 +43,17 @@ export default function TodoListScreen() {
   const insets = useSafeAreaInsets();
 
   const [refreshing, setRefreshing] = useState(false);
+  const flatListRef = useRef<FlatList>(null);
+
+  // Scroll to top when switching to empty list or changing filters
+  React.useEffect(() => {
+    if (flatListRef.current) {
+      // Always scroll to top when filter changes to ensure consistent behavior
+      setTimeout(() => {
+        flatListRef.current?.scrollToOffset({ offset: 0, animated: false });
+      }, 0);
+    }
+  }, [filter]); // Trigger on filter changes
 
   const availableCategories = Array.from(new Set(todos.map(todo => todo.category).filter(Boolean))) as string[];
 
@@ -69,9 +81,27 @@ export default function TodoListScreen() {
 
   const currentCategory = getCurrentCategory();
 
-  // Get category-specific statistics for FilterTabs
-  const selectedCategory = getCurrentCategory();
-  const categoryStats = getCategoryStats(selectedCategory);
+  // Get category-specific counts for header
+  const getCategoryCounts = () => {
+    if (!currentCategory) {
+      // Show all todos count
+      return {
+        total: totalTodos,
+        completed: completedTodos,
+      };
+    }
+
+    // Show category-specific counts
+    const categoryTodos = todos.filter(todo => todo.category === currentCategory);
+    const categoryCompleted = categoryTodos.filter(todo => todo.completed).length;
+
+    return {
+      total: categoryTodos.length,
+      completed: categoryCompleted,
+    };
+  };
+
+  const categoryCounts = getCategoryCounts();
 
   // Get all categories with their pending counts
   const getAllCategoriesWithCounts = () => {
@@ -149,13 +179,11 @@ export default function TodoListScreen() {
         })()}
       </Text>
       {(() => {
-        // Handle category filters
+        // Show add button for all empty categories and "All" filter
         if (filter.startsWith('category:')) {
-          const category = filter.replace('category:', '');
-          return category === 'Personal';
+          return true; // Show for any category filter
         }
-
-        // Handle "All" filter
+        // Show for "All" filter
         return filter === 'all';
       })() && (
         <TouchableOpacity
@@ -184,11 +212,13 @@ export default function TodoListScreen() {
       
       <View style={styles.header}>
         <View>
-          <Text style={styles.headerTitle}>Time Box 2</Text>
+          <Text style={styles.headerTitle}>
+            {currentCategory ? `${currentCategory} Tasks` : 'Time Box'}
+          </Text>
           <Text style={styles.headerSubtitle}>
-            {totalTodos === 0 
+            {categoryCounts.total === 0 
               ? 'No tasks yet'
-              : `${completedTodos} of ${totalTodos} completed`
+              : `${categoryCounts.completed} of ${categoryCounts.total} completed`
             }
           </Text>
         </View>
@@ -234,26 +264,31 @@ export default function TodoListScreen() {
         />
       </View>
 
-      <FlatList
-        data={todos}
-        keyExtractor={(item) => item.id}
-        renderItem={renderTodoItem}
-        contentContainerStyle={[
-          styles.listContainer,
-          todos.length === 0 && styles.emptyListContainer,
-          todos.length === 0 && styles.noFabContainer, // Remove FAB padding when no tasks
-        ]}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={handleRefresh}
-            tintColor={colors.primary}
-            colors={[colors.primary]}
-          />
-        }
-        ListEmptyComponent={renderEmptyState}
-      />
+      <View style={styles.listWrapper}>
+        <FlatList
+          ref={flatListRef}
+          data={todos}
+          keyExtractor={(item) => item.id}
+          renderItem={renderTodoItem}
+          style={todos.length === 0 ? styles.emptyFlatList : undefined}
+          contentContainerStyle={[
+            styles.listContainer,
+            todos.length === 0 && styles.emptyListContainer,
+          ]}
+          showsVerticalScrollIndicator={false}
+          scrollEnabled={todos.length > 0} // Disable scrolling when empty
+          extraData={todos.length} // Force re-render when todo count changes
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor={colors.primary}
+              colors={[colors.primary]}
+            />
+          }
+          ListEmptyComponent={renderEmptyState}
+        />
+      </View>
 
       {/* Floating Action Button - Only show when there are tasks */}
       {todos.length > 0 && (
@@ -289,7 +324,7 @@ const createStyles = (colors: typeof Colors.light) =>
       justifyContent: 'space-between',
       alignItems: 'center',
       paddingHorizontal: 20,
-      paddingTop: 24,
+      paddingTop: 0,
       paddingBottom: 16,
       borderBottomWidth: 1,
       borderBottomColor: colors.border,
@@ -375,9 +410,20 @@ const createStyles = (colors: typeof Colors.light) =>
       paddingHorizontal: 20,
       paddingBottom: 100, // Account for FAB (60px height + 20px margin + extra space)
     },
+    listWrapper: {
+      flex: 1,
+      paddingTop: 10
+    },
+    emptyFlatList: {
+      flex: 1,
+    },
     emptyListContainer: {
       flex: 1,
-      justifyContent: 'center',
+      paddingTop: 50,
+      justifyContent: 'flex-start',
+      alignItems: 'center',
+      paddingHorizontal: 20,
+      minHeight: Dimensions.get('window').height * 1, // Ensure minimum height for centering
     },
     noFabContainer: {
       paddingBottom: 20, // Reduced padding when no FAB is shown
@@ -430,15 +476,15 @@ const createStyles = (colors: typeof Colors.light) =>
           shadowOffset: { width: 0, height: 4 },
           shadowOpacity: 0.4,
           shadowRadius: 12,
-          bottom: 34, // Account for iOS home indicator
         },
         android: {
           elevation: 12,
-          bottom: 20,
         },
         web: {
           boxShadow: '0px 6px 20px rgba(0, 0, 0, 0.3)',
-          bottom: 20,
+        },
+        default: {
+          boxShadow: '0px 6px 20px rgba(0, 0, 0, 0.3)',
         },
       }),
     },
