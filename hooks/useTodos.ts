@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
+import { DEFAULT_CATEGORY } from '../constants/Categories';
 import { storageService } from '../services/StorageService';
 import { Todo, TodoFilter, TodoPriority, TodoRecurrence } from '../types/Todo';
 
 export const useTodos = () => {
   const [todos, setTodos] = useState<Todo[]>([]);
-  const [filter, setFilter] = useState<TodoFilter>('all');
+  const [filter, setFilter] = useState<TodoFilter>(`category:${DEFAULT_CATEGORY}`);
   const [isLoading, setIsLoading] = useState(true);
 
   // Load todos from storage on mount
@@ -156,14 +157,14 @@ export const useTodos = () => {
 
   // Filter todos based on current filter
   const filteredTodos = todos.filter(todo => {
-    switch (filter) {
-      case 'completed':
-        return todo.completed;
-      case 'pending':
-        return !todo.completed;
-      default:
-        return true;
+    // Handle category filters
+    if (filter.startsWith('category:')) {
+      const category = filter.replace('category:', '');
+      return todo.category === category;
     }
+
+    // Handle "All" filter - show all todos
+    return true;
   });
 
   // Sort todos by: due date (soonest first), then priority (highest first), then creation time (newest first)
@@ -211,6 +212,23 @@ export const useTodos = () => {
   const completedTodos = todos.filter(todo => todo.completed).length;
   const pendingTodos = totalTodos - completedTodos;
 
+  // Category-specific statistics
+  const getCategoryStats = (category: string | null) => {
+    const categoryTodos = category
+      ? todos.filter(todo => todo.category === category)
+      : todos;
+
+    const categoryTotal = categoryTodos.length;
+    const categoryCompleted = categoryTodos.filter(todo => todo.completed).length;
+    const categoryPending = categoryTotal - categoryCompleted;
+
+    return {
+      total: categoryTotal,
+      completed: categoryCompleted,
+      pending: categoryPending,
+    };
+  };
+
   const refreshTodos = useCallback(async () => {
     await loadTodos();
   }, []);
@@ -222,6 +240,7 @@ export const useTodos = () => {
     totalTodos,
     completedTodos,
     pendingTodos,
+    getCategoryStats,
     setFilter,
     addTodo,
     updateTodo,

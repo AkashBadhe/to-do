@@ -6,7 +6,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import React from 'react';
 
 export default function AddTodoScreen() {
-  const { editTodo } = useLocalSearchParams<{ editTodo?: string }>();
+  const { editTodo, defaultCategory } = useLocalSearchParams<{ editTodo?: string; defaultCategory?: string }>();
   const { addTodo, updateTodo } = useTodos();
   const { isDark } = useTheme();
 
@@ -40,6 +40,7 @@ export default function AddTodoScreen() {
       onSave={handleSave}
       onCancel={handleCancel}
       isDark={isDark}
+      defaultCategory={defaultCategory}
     />
   );
 }

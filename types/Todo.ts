@@ -9,12 +9,13 @@ export interface Todo {
   endDate?: Date; // when recurrence ends
   hasReminder?: boolean;
   reminderTime?: string; // e.g., "09:00"
+  category?: string; // new category field
   completed: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
 
-export type TodoFilter = 'all' | 'completed' | 'pending';
+export type TodoFilter = 'all' | 'completed' | 'pending' | `category:${string}`;
 
 export type TodoPriority = 'low' | 'medium' | 'high';
 

@@ -10,11 +10,12 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { FilterTabs } from '@/components/FilterTabs';
 import { TodoItem } from '@/components/TodoItem';
+import { DEFAULT_CATEGORIES } from '@/constants/Categories';
 import { Colors } from '@/constants/Colors';
 import { useTheme } from '@/hooks/ThemeContext';
 import { useTodos } from '@/hooks/useTodos';
@@ -28,6 +29,7 @@ export default function TodoListScreen() {
     totalTodos,
     completedTodos,
     pendingTodos,
+    getCategoryStats,
     setFilter,
     toggleTodo,
     deleteTodo,
@@ -37,8 +39,11 @@ export default function TodoListScreen() {
   const { isDark } = useTheme();
   const colors = isDark ? Colors.dark : Colors.light;
   const styles = createStyles(colors);
+  const insets = useSafeAreaInsets();
 
   const [refreshing, setRefreshing] = useState(false);
+
+  const availableCategories = Array.from(new Set(todos.map(todo => todo.category).filter(Boolean))) as string[];
 
   // Refresh todos when screen comes into focus (e.g., when returning from add-todo modal)
   useFocusEffect(
@@ -53,6 +58,46 @@ export default function TodoListScreen() {
     await refreshTodos();
     setRefreshing(false);
   };
+
+  const getCurrentCategory = (): string | null => {
+    if (filter.startsWith('category:')) {
+      const parts = filter.split(':');
+      return parts[1] || null; // Return the category name (second part)
+    }
+    return null;
+  };
+
+  const currentCategory = getCurrentCategory();
+
+  // Get category-specific statistics for FilterTabs
+  const selectedCategory = getCurrentCategory();
+  const categoryStats = getCategoryStats(selectedCategory);
+
+  // Get all categories with their pending counts
+  const getAllCategoriesWithCounts = () => {
+    const allCategories = ['All', ...DEFAULT_CATEGORIES];
+    const categoriesWithCounts = allCategories.map(category => {
+      let stats;
+      if (category === 'All') {
+        stats = {
+          total: todos.length,
+          pending: todos.filter(todo => !todo.completed).length,
+          completed: todos.filter(todo => todo.completed).length,
+        };
+      } else {
+        stats = getCategoryStats(category);
+      }
+      return {
+        name: category,
+        pendingCount: stats.pending,
+        totalCount: stats.total,
+      };
+    });
+
+    return categoriesWithCounts;
+  };
+
+  const categoriesWithCounts = getAllCategoriesWithCounts();
 
   const handleEdit = (todo: Todo) => {
     // Navigate to edit screen with todo data
@@ -80,25 +125,51 @@ export default function TodoListScreen() {
         color={colors.textSecondary} 
       />
       <Text style={styles.emptyTitle}>
-        {filter === 'completed' 
-          ? 'No completed tasks yet'
-          : filter === 'pending'
-          ? 'No pending tasks'
-          : 'No tasks yet'
-        }
+        {(() => {
+          // Handle category filters
+          if (filter.startsWith('category:')) {
+            const category = filter.replace('category:', '');
+            return `No tasks in ${category} category`;
+          }
+
+          // Handle "All" filter
+          return 'No tasks yet';
+        })()}
       </Text>
       <Text style={styles.emptySubtitle}>
-        {filter === 'all' 
-          ? 'Add your first task to get started!'
-          : filter === 'pending'
-          ? 'All tasks are completed! 🎉'
-          : 'Complete some tasks to see them here'
-        }
+        {(() => {
+          // Handle category filters
+          if (filter.startsWith('category:')) {
+            const category = filter.replace('category:', '');
+            return `Add tasks to the ${category} category`;
+          }
+
+          // Handle "All" filter
+          return 'Add your first task to get started!';
+        })()}
       </Text>
-      {filter === 'all' && (
+      {(() => {
+        // Handle category filters
+        if (filter.startsWith('category:')) {
+          const category = filter.replace('category:', '');
+          return category === 'Personal';
+        }
+
+        // Handle "All" filter
+        return filter === 'all';
+      })() && (
         <TouchableOpacity
           style={styles.addFirstTaskButton}
-          onPress={() => router.push('/add-todo')}
+          onPress={() => {
+            const params: any = {};
+            if (currentCategory) {
+              params.defaultCategory = currentCategory;
+            }
+            router.push({
+              pathname: '/add-todo',
+              params,
+            });
+          }}
         >
           <Ionicons name="add" size={20} color={colors.background} />
           <Text style={styles.addFirstTaskText}>Add Your First Task</Text>
@@ -113,7 +184,7 @@ export default function TodoListScreen() {
       
       <View style={styles.header}>
         <View>
-          <Text style={styles.headerTitle}>My Tasks</Text>
+          <Text style={styles.headerTitle}>Time Box 2</Text>
           <Text style={styles.headerSubtitle}>
             {totalTodos === 0 
               ? 'No tasks yet'
@@ -121,22 +192,47 @@ export default function TodoListScreen() {
             }
           </Text>
         </View>
-        <TouchableOpacity
-          style={styles.addButton}
-          onPress={() => router.push('/add-todo')}
-        >
-          <Ionicons name="add" size={24} color={colors.background} />
-        </TouchableOpacity>
       </View>
 
-      <FilterTabs
-        currentFilter={filter}
-        onFilterChange={setFilter}
-        totalTodos={totalTodos}
-        completedTodos={completedTodos}
-        pendingTodos={pendingTodos}
-        isDark={isDark}
-      />
+      {/* Category Selector */}
+      <View style={styles.categorySelector}>
+        <FlatList
+          horizontal
+          data={categoriesWithCounts}
+          keyExtractor={(item) => item.name}
+          showsHorizontalScrollIndicator={false}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={[
+                styles.categoryTab,
+                (item.name === 'All' && !currentCategory) || (currentCategory === item.name) ? styles.categoryTabActive : null,
+              ]}
+              onPress={() => {
+                if (item.name === 'All') {
+                  setFilter('all');
+                } else {
+                  setFilter(`category:${item.name}`);
+                }
+              }}
+            >
+              <Text
+                style={[
+                  styles.categoryTabText,
+                  (item.name === 'All' && !currentCategory) || (currentCategory === item.name) ? styles.categoryTabTextActive : null,
+                ]}
+              >
+                {item.name}
+              </Text>
+              {item.pendingCount > 0 && (
+                <View style={styles.pendingBadge}>
+                  <Text style={styles.pendingBadgeText}>{item.pendingCount}</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          )}
+          contentContainerStyle={styles.categoryList}
+        />
+      </View>
 
       <FlatList
         data={todos}
@@ -145,6 +241,7 @@ export default function TodoListScreen() {
         contentContainerStyle={[
           styles.listContainer,
           todos.length === 0 && styles.emptyListContainer,
+          todos.length === 0 && styles.noFabContainer, // Remove FAB padding when no tasks
         ]}
         showsVerticalScrollIndicator={false}
         refreshControl={
@@ -157,6 +254,26 @@ export default function TodoListScreen() {
         }
         ListEmptyComponent={renderEmptyState}
       />
+
+      {/* Floating Action Button - Only show when there are tasks */}
+      {todos.length > 0 && (
+        <TouchableOpacity
+          style={styles.floatingActionButton}
+          onPress={() => {
+            const params: any = {};
+            if (currentCategory) {
+              params.defaultCategory = currentCategory;
+            }
+            router.push({
+              pathname: '/add-todo',
+              params,
+            });
+          }}
+        >
+          <Ionicons name="add" size={28} color={colors.background} />
+        </TouchableOpacity>
+      )}
+
     </View>
   );
 }
@@ -187,35 +304,83 @@ const createStyles = (colors: typeof Colors.light) =>
       color: colors.textSecondary,
       marginTop: 2,
     },
-    addButton: {
-      width: 44,
-      height: 44,
-      borderRadius: 22,
+    categorySelector: {
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+      backgroundColor: colors.surface,
+    },
+    categoryList: {
+      paddingHorizontal: 20,
+      paddingVertical: 12,
+    },
+    categoryTab: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 8,
+      paddingHorizontal: 16,
+      marginRight: 8,
+      borderRadius: 20,
+      backgroundColor: colors.background,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    categoryTabActive: {
+      backgroundColor: colors.primary,
+      borderColor: colors.primary,
+    },
+    categoryTabText: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: colors.text,
+    },
+    categoryTabTextActive: {
+      color: colors.background,
+    },
+    pendingBadge: {
+      marginLeft: 6,
+      minWidth: 18,
+      height: 18,
+      borderRadius: 9,
       backgroundColor: colors.primary,
       alignItems: 'center',
       justifyContent: 'center',
-      ...Platform.select({
-        ios: {
-          shadowColor: colors.shadow,
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.25,
-          shadowRadius: 4,
-        },
-        android: {
-          elevation: 4,
-        },
-        web: {
-          boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.15)',
-        },
-      }),
+    },
+    pendingBadgeText: {
+      fontSize: 11,
+      fontWeight: '600',
+      color: colors.background,
+    },
+    categoryFilterButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 6,
+      paddingHorizontal: 10,
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: colors.border,
+      backgroundColor: colors.surface,
+      maxWidth: 120,
+    },
+    categoryFilterButtonActive: {
+      backgroundColor: colors.primary,
+      borderColor: colors.primary,
+    },
+    categoryFilterText: {
+      fontSize: 13,
+      fontWeight: '600',
+      marginHorizontal: 4,
+      flex: 1,
     },
     listContainer: {
       paddingHorizontal: 20,
-      paddingBottom: 20,
+      paddingBottom: 100, // Account for FAB (60px height + 20px margin + extra space)
     },
     emptyListContainer: {
       flex: 1,
       justifyContent: 'center',
+    },
+    noFabContainer: {
+      paddingBottom: 20, // Reduced padding when no FAB is shown
     },
     emptyState: {
       alignItems: 'center',
@@ -248,5 +413,89 @@ const createStyles = (colors: typeof Colors.light) =>
       fontWeight: '600',
       color: colors.background,
       marginLeft: 8,
+    },
+    floatingActionButton: {
+      position: 'absolute',
+      right: 20,
+      bottom: 20,
+      width: 60,
+      height: 60,
+      borderRadius: 30,
+      backgroundColor: colors.primary,
+      alignItems: 'center',
+      justifyContent: 'center',
+      ...Platform.select({
+        ios: {
+          shadowColor: colors.shadow,
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.4,
+          shadowRadius: 12,
+          bottom: 34, // Account for iOS home indicator
+        },
+        android: {
+          elevation: 12,
+          bottom: 20,
+        },
+        web: {
+          boxShadow: '0px 6px 20px rgba(0, 0, 0, 0.3)',
+          bottom: 20,
+        },
+      }),
+    },
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      justifyContent: 'flex-end',
+    },
+    modalContent: {
+      borderTopLeftRadius: 20,
+      borderTopRightRadius: 20,
+      paddingHorizontal: 20,
+      paddingTop: 20,
+      paddingBottom: 40,
+      maxHeight: '70%',
+    },
+    modalHeader: {
+      alignItems: 'center',
+      marginBottom: 20,
+    },
+    modalTitle: {
+      fontSize: 18,
+      fontWeight: '600',
+    },
+    categoryOptions: {
+      marginBottom: 20,
+    },
+    categoryOption: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+      borderRadius: 12,
+      marginBottom: 8,
+    },
+    categoryOptionSelected: {
+      backgroundColor: colors.primary,
+    },
+    categoryOptionText: {
+      fontSize: 16,
+      fontWeight: '500',
+      marginLeft: 12,
+    },
+    modalActions: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+    },
+    modalButton: {
+      paddingVertical: 12,
+      paddingHorizontal: 24,
+      borderRadius: 12,
+      borderWidth: 1,
+      minWidth: 100,
+      alignItems: 'center',
+    },
+    modalButtonText: {
+      fontSize: 16,
+      fontWeight: '600',
     },
   });
