@@ -91,7 +91,7 @@ export default function TodoListScreen() {
       };
     }
 
-    // Show category-specific counts
+    // Show category-specific counts for the selected category
     const categoryTodos = todos.filter(todo => todo.category === currentCategory);
     const categoryCompleted = categoryTodos.filter(todo => todo.completed).length;
 
@@ -109,10 +109,11 @@ export default function TodoListScreen() {
     const categoriesWithCounts = allCategories.map(category => {
       let stats;
       if (category === 'All') {
+        // Always show total count for "All" regardless of current filter
         stats = {
-          total: todos.length,
-          pending: todos.filter(todo => !todo.completed).length,
-          completed: todos.filter(todo => todo.completed).length,
+          total: totalTodos, // Use totalTodos from useTodos hook
+          pending: pendingTodos, // Use pendingTodos from useTodos hook  
+          completed: completedTodos, // Use completedTodos from useTodos hook
         };
       } else {
         stats = getCategoryStats(category);
