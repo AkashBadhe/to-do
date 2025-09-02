@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import React, { useEffect, useState } from 'react';
 import {
   KeyboardAvoidingView,
@@ -90,6 +91,7 @@ export const TodoForm: React.FC<TodoFormProps> = ({
   const [endDate, setEndDate] = useState<Date | undefined>(todo?.endDate);
   const [hasReminder, setHasReminder] = useState<boolean>(todo?.hasReminder || false);
   const [reminderTime, setReminderTime] = useState<string>(todo?.reminderTime || '09:00');
+  const [showTimePicker, setShowTimePicker] = useState(false);
   const [titleError, setTitleError] = useState('');
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [tempDate, setTempDate] = useState<Date>(new Date());
@@ -104,6 +106,33 @@ export const TodoForm: React.FC<TodoFormProps> = ({
       month: 'short',
       day: 'numeric',
     });
+  };
+
+  const formatTime = (timeString: string) => {
+    const [hours, minutes] = timeString.split(':').map(Number);
+    const date = new Date();
+    date.setHours(hours, minutes);
+    return date.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
+  };
+
+  const createTimeFromString = (timeString: string): Date => {
+    const [hours, minutes] = timeString.split(':').map(Number);
+    const date = new Date();
+    date.setHours(hours, minutes, 0, 0);
+    return date;
+  };
+
+  const onTimeChange = (event: any, selectedTime?: Date) => {
+    setShowTimePicker(Platform.OS === 'ios');
+    if (selectedTime) {
+      const hours = selectedTime.getHours().toString().padStart(2, '0');
+      const minutes = selectedTime.getMinutes().toString().padStart(2, '0');
+      setReminderTime(`${hours}:${minutes}`);
+    }
   };
 
   const handleSave = () => {
@@ -397,13 +426,16 @@ export const TodoForm: React.FC<TodoFormProps> = ({
                 <Text style={styles.switchLabel}>Enable reminder</Text>
               </View>
               {hasReminder && (
-                <TextInput
-                  style={styles.input}
-                  value={reminderTime}
-                  onChangeText={setReminderTime}
-                  placeholder="HH:MM"
-                  placeholderTextColor={colors.textSecondary}
-                />
+                <TouchableOpacity
+                  style={styles.timePickerButton}
+                  onPress={() => setShowTimePicker(true)}
+                >
+                  <Ionicons name="time-outline" size={20} color={colors.primary} />
+                  <Text style={styles.timePickerText}>
+                    {formatTime(reminderTime)}
+                  </Text>
+                  <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
+                </TouchableOpacity>
               )}
             </View>
           </View>
@@ -647,6 +679,17 @@ export const TodoForm: React.FC<TodoFormProps> = ({
           </View>
         </View>
       </Modal>
+
+      {/* Time Picker */}
+      {showTimePicker && (
+        <DateTimePicker
+          value={createTimeFromString(reminderTime)}
+          mode="time"
+          is24Hour={false}
+          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+          onChange={onTimeChange}
+        />
+      )}
     </View>
   );
 };
@@ -1050,5 +1093,21 @@ const createStyles = (colors: ThemeColors) =>
     clearModalButton: {
       backgroundColor: 'transparent',
       borderWidth: 1,
+    },
+    timePickerButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: 16,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 12,
+      backgroundColor: colors.surface,
+      marginTop: 8,
+    },
+    timePickerText: {
+      flex: 1,
+      fontSize: 16,
+      color: colors.text,
+      marginLeft: 12,
     },
   });

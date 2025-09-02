@@ -2,15 +2,22 @@ import { DarkTheme, DefaultTheme, ThemeProvider as NavigationThemeProvider } fro
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { useEffect } from 'react';
 import 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { AppThemeProvider, useTheme } from '@/hooks/ThemeContext';
+import { NotificationService } from '@/services/NotificationService';
 
 export default function RootLayout() {
   const [loaded] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
+
+  // Initialize notifications when app loads
+  useEffect(() => {
+    NotificationService.requestPermissions();
+  }, []);
 
   if (!loaded) {
     // Async font loading only occurs in development.

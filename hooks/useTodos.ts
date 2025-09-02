@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { DEFAULT_CATEGORY } from '../constants/Categories';
+import { NotificationService } from '../services/NotificationService';
 import { storageService } from '../services/StorageService';
 import { Todo, TodoFilter, TodoPriority, TodoRecurrence } from '../types/Todo';
 
@@ -46,6 +47,24 @@ export const useTodos = () => {
       createdAt: new Date(),
       updatedAt: new Date(),
     };
+
+    // Schedule notification if reminder is enabled
+    if (newTodo.hasReminder && newTodo.reminderTime && newTodo.dueDate) {
+      const reminderDateTime = NotificationService.calculateReminderTime(
+        newTodo.dueDate,
+        newTodo.reminderTime
+      );
+      
+      if (reminderDateTime > new Date()) {
+        await NotificationService.scheduleNotification(
+          newTodo.id,
+          newTodo.title,
+          newTodo.description,
+          reminderDateTime
+        );
+      }
+    }
+
     // Get current todos state instead of using stale closure
     setTodos(currentTodos => {
       const newTodos = [...currentTodos, newTodo];
@@ -59,6 +78,32 @@ export const useTodos = () => {
 
   const updateTodo = useCallback(async (id: string, updates: Partial<Todo>) => {
     setTodos(currentTodos => {
+      const existingTodo = currentTodos.find(todo => todo.id === id);
+      const updatedTodo = existingTodo ? { ...existingTodo, ...updates, updatedAt: new Date() } : null;
+
+      // Handle notification updates
+      if (updatedTodo) {
+        // Cancel existing notification
+        NotificationService.cancelNotification(id);
+
+        // Schedule new notification if reminder is enabled
+        if (updatedTodo.hasReminder && updatedTodo.reminderTime && updatedTodo.dueDate) {
+          const reminderDateTime = NotificationService.calculateReminderTime(
+            updatedTodo.dueDate,
+            updatedTodo.reminderTime
+          );
+          
+          if (reminderDateTime > new Date()) {
+            NotificationService.scheduleNotification(
+              updatedTodo.id,
+              updatedTodo.title,
+              updatedTodo.description,
+              reminderDateTime
+            );
+          }
+        }
+      }
+
       const newTodos = currentTodos.map(todo =>
         todo.id === id
           ? { ...todo, ...updates, updatedAt: new Date() }
@@ -73,6 +118,9 @@ export const useTodos = () => {
   }, []);
 
   const deleteTodo = useCallback(async (id: string) => {
+    // Cancel notification when deleting todo
+    await NotificationService.cancelNotification(id);
+
     setTodos(currentTodos => {
       const newTodos = currentTodos.filter(todo => todo.id !== id);
       // Save to storage asynchronously
