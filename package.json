@@ -21,6 +21,7 @@
     "expo": "~53.0.22",
     "expo-blur": "~14.1.5",
     "expo-device": "~6.0.2",
+    "expo-dev-client": "~4.0.14",
     "expo-font": "~13.3.2",
     "expo-haptics": "~14.1.4",
     "expo-image": "~2.4.0",
