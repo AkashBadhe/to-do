@@ -1,15 +1,29 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import {
-    Alert,
-    Platform,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  Platform,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { Colors, ThemeColors } from '../constants/Colors';
 import { Todo } from '../types/Todo';
+
+const getCategoryIcon = (category: string): keyof typeof Ionicons.glyphMap => {
+  const lowerCategory = category.toLowerCase();
+  if (lowerCategory.includes('work') || lowerCategory.includes('office')) return 'briefcase';
+  if (lowerCategory.includes('personal')) return 'person';
+  if (lowerCategory.includes('shopping') || lowerCategory.includes('groceries')) return 'basket';
+  if (lowerCategory.includes('health') || lowerCategory.includes('fitness')) return 'fitness';
+  if (lowerCategory.includes('finance') || lowerCategory.includes('bills')) return 'card';
+  if (lowerCategory.includes('family') || lowerCategory.includes('home')) return 'home';
+  if (lowerCategory.includes('study') || lowerCategory.includes('learning')) return 'school';
+  if (lowerCategory.includes('travel') || lowerCategory.includes('plans')) return 'airplane';
+  if (lowerCategory.includes('important') || lowerCategory.includes('priority')) return 'star';
+  return 'folder';
+};
 
 const getPriorityColor = (priority: string, colors: ThemeColors): string => {
   switch (priority) {
@@ -119,6 +133,14 @@ export const TodoItem: React.FC<TodoItemProps> = ({
           <Text style={[styles.description, todo.completed && styles.completedText]}>
             {todo.description}
           </Text>
+        )}
+        {todo.category && (
+          <View style={styles.categoryBadge}>
+            <Ionicons name={getCategoryIcon(todo.category)} size={12} color={colors.primary} />
+            <Text style={[styles.categoryText, { color: colors.primary }]}>
+              {todo.category}
+            </Text>
+          </View>
         )}
         {todo.dueDate && (
           <Text style={[
@@ -275,5 +297,19 @@ const createStyles = (colors: ThemeColors) =>
     recurrenceText: {
       fontSize: 12,
       marginLeft: 4,
+    },
+    categoryBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginTop: 4,
+      paddingHorizontal: 6,
+      paddingVertical: 2,
+      borderRadius: 12,
+      backgroundColor: 'transparent',
+    },
+    categoryText: {
+      fontSize: 12,
+      marginLeft: 4,
+      fontWeight: '500',
     },
   });

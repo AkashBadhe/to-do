@@ -1,12 +1,12 @@
 import React from 'react';
 import {
-  View,
-  TouchableOpacity,
-  Text,
   StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { TodoFilter } from '../types/Todo';
 import { Colors, ThemeColors } from '../constants/Colors';
+import { TodoFilter } from '../types/Todo';
 
 interface FilterTabsProps {
   currentFilter: TodoFilter;
@@ -15,6 +15,7 @@ interface FilterTabsProps {
   completedTodos: number;
   pendingTodos: number;
   isDark: boolean;
+  currentCategory?: string | null;
 }
 
 export const FilterTabs: React.FC<FilterTabsProps> = ({
@@ -24,45 +25,74 @@ export const FilterTabs: React.FC<FilterTabsProps> = ({
   completedTodos,
   pendingTodos,
   isDark,
+  currentCategory,
 }) => {
   const colors = isDark ? Colors.dark : Colors.light;
   const styles = createStyles(colors);
 
-  const filters: { key: TodoFilter; label: string; count: number }[] = [
+  // Determine the current status filter within the category
+  const getCurrentStatusFilter = (): string => {
+    if (currentFilter === 'all' || currentFilter === 'pending' || currentFilter === 'completed') {
+      return currentFilter;
+    }
+    // If it's a category filter, extract the status part
+    if (currentFilter.startsWith('category:') && currentFilter.includes(':')) {
+      const parts = currentFilter.split(':');
+      return parts[2] || 'all';
+    }
+    return 'all';
+  };
+
+  const currentStatusFilter = getCurrentStatusFilter();
+
+  const filters: { key: string; label: string; count: number }[] = [
     { key: 'all', label: 'All', count: totalTodos },
     { key: 'pending', label: 'Pending', count: pendingTodos },
     { key: 'completed', label: 'Completed', count: completedTodos },
   ];
 
+  const handleFilterChange = (statusFilter: string) => {
+    if (currentCategory) {
+      // Create combined filter: category:CategoryName:status
+      const combinedFilter = `category:${currentCategory}:${statusFilter}`;
+      onFilterChange(combinedFilter as TodoFilter);
+    } else {
+      // Fallback to simple status filter
+      onFilterChange(statusFilter as TodoFilter);
+    }
+  };
+
   return (
     <View style={styles.container}>
-      {filters.map((filter) => (
-        <TouchableOpacity
-          key={filter.key}
-          style={[
-            styles.tab,
-            currentFilter === filter.key && styles.activeTab,
-          ]}
-          onPress={() => onFilterChange(filter.key)}
-        >
-          <Text
+      <View style={styles.filterTabs}>
+        {filters.map((filter) => (
+          <TouchableOpacity
+            key={filter.key}
             style={[
-              styles.tabText,
-              currentFilter === filter.key && styles.activeTabText,
+              styles.tab,
+              currentStatusFilter === filter.key && styles.activeTab,
             ]}
+            onPress={() => handleFilterChange(filter.key)}
           >
-            {filter.label}
-          </Text>
-          <Text
-            style={[
-              styles.tabCount,
-              currentFilter === filter.key && styles.activeTabCount,
-            ]}
-          >
-            {filter.count}
-          </Text>
-        </TouchableOpacity>
-      ))}
+            <Text
+              style={[
+                styles.tabText,
+                currentStatusFilter === filter.key && styles.activeTabText,
+              ]}
+            >
+              {filter.label}
+            </Text>
+            <Text
+              style={[
+                styles.tabCount,
+                currentStatusFilter === filter.key && styles.activeTabCount,
+              ]}
+            >
+              {filter.count}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
     </View>
   );
 };
@@ -75,37 +105,42 @@ const createStyles = (colors: ThemeColors) =>
       borderRadius: 12,
       padding: 4,
       marginVertical: 16,
+      alignItems: 'center',
+    },
+    filterTabs: {
+      flex: 1,
+      flexDirection: 'row',
     },
     tab: {
       flex: 1,
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      paddingVertical: 12,
-      paddingHorizontal: 16,
+      paddingVertical: 10,
+      paddingHorizontal: 12,
       borderRadius: 8,
     },
     activeTab: {
       backgroundColor: colors.primary,
     },
     tabText: {
-      fontSize: 14,
+      fontSize: 13,
       fontWeight: '600',
       color: colors.text,
-      marginRight: 6,
+      marginRight: 4,
     },
     activeTabText: {
       color: colors.background,
     },
     tabCount: {
-      fontSize: 12,
+      fontSize: 11,
       fontWeight: '600',
       color: colors.textSecondary,
       backgroundColor: colors.border,
-      paddingHorizontal: 6,
-      paddingVertical: 2,
-      borderRadius: 10,
-      minWidth: 20,
+      paddingHorizontal: 5,
+      paddingVertical: 1,
+      borderRadius: 8,
+      minWidth: 18,
       textAlign: 'center',
     },
     activeTabCount: {
