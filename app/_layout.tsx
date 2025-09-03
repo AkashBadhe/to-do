@@ -7,7 +7,7 @@ import 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { AppThemeProvider, useTheme } from '@/hooks/ThemeContext';
-import { NotificationService } from '@/services/NotificationService';
+import { NotificationService, setupNotificationListeners } from '@/services/NotificationService';
 
 export default function RootLayout() {
   const [loaded] = useFonts({
@@ -17,6 +17,14 @@ export default function RootLayout() {
   // Initialize notifications when app loads
   useEffect(() => {
     NotificationService.requestPermissions();
+    
+    // Set up notification listeners
+    const listeners = setupNotificationListeners();
+    
+    // Clean up listeners when component unmounts
+    return () => {
+      listeners.remove();
+    };
   }, []);
 
   if (!loaded) {

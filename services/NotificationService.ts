@@ -4,14 +4,57 @@ import { Platform } from 'react-native';
 
 // Configure how notifications are handled when the app is running
 Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
+  handleNotification: async (notification) => {
+    console.log('📱 Handling notification:', notification.request.content.title);
+    return {
+      shouldShowAlert: true,
+      shouldPlaySound: true,
+      shouldSetBadge: true,
+      shouldShowBanner: true,
+      shouldShowList: true,
+    };
+  },
 });
+
+// Set up notification response handlers
+export const setupNotificationListeners = () => {
+  // Handle notification received while app is in foreground
+  const notificationListener = Notifications.addNotificationReceivedListener(notification => {
+    console.log('📱 Notification received in foreground:', notification);
+  });
+
+  // Handle notification response (when user taps on notification)
+  const responseListener = Notifications.addNotificationResponseReceivedListener(response => {
+    console.log('👆 User interacted with notification:', response);
+    
+    const { actionIdentifier, notification } = response;
+    const { todoId } = notification.request.content.data as { todoId: string };
+    
+    switch (actionIdentifier) {
+      case 'snooze':
+        console.log('User chose to snooze task:', todoId);
+        // TODO: Implement snooze functionality
+        break;
+      case 'complete':
+        console.log('User marked task as complete:', todoId);
+        // TODO: Implement mark complete functionality
+        break;
+      case 'dismiss':
+      default:
+        console.log('User dismissed notification:', todoId);
+        break;
+    }
+  });
+
+  return {
+    notificationListener,
+    responseListener,
+    remove: () => {
+      Notifications.removeNotificationSubscription(notificationListener);
+      Notifications.removeNotificationSubscription(responseListener);
+    }
+  };
+};
 
 export class NotificationService {
   static async requestPermissions(): Promise<boolean> {
@@ -152,20 +195,11 @@ export class NotificationService {
       const notificationId = await Notifications.scheduleNotificationAsync({
         content: notificationContent,
         trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
           seconds: Math.max(1, Math.floor((scheduledTime.getTime() - Date.now()) / 1000)),
         },
         identifier: todoId,
       });
-
-      // For immediate testing, use presentNotificationAsync
-      if (scheduledTime <= new Date(Date.now() + 60000)) {
-        console.log('⚡ Presenting notification immediately for testing');
-        await Notifications.presentNotificationAsync({
-          title: notificationContent.title,
-          body: notificationContent.body,
-          data: notificationContent.data,
-        });
-      }
 
       console.log('✅ Notification scheduled successfully:', {
         notificationId,
