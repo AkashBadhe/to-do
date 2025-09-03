@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
+  Keyboard,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -75,6 +76,7 @@ export const TodoForm: React.FC<TodoFormProps> = ({
   const insets = useSafeAreaInsets();
   const colors = isDark ? Colors.dark : Colors.light;
   const styles = createStyles(colors);
+  const titleInputRef = useRef<TextInput>(null);
 
   const [title, setTitle] = useState(todo?.title || '');
   const [description, setDescription] = useState(todo?.description || '');
@@ -140,6 +142,9 @@ export const TodoForm: React.FC<TodoFormProps> = ({
       setTitleError('Title is required');
       return;
     }
+
+    // Dismiss keyboard before saving
+    Keyboard.dismiss();
 
     onSave({
       title: title.trim(),
@@ -212,13 +217,29 @@ export const TodoForm: React.FC<TodoFormProps> = ({
     }
   }, [title]);
 
+  // Auto-focus title input when component mounts
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (titleInputRef.current && !todo) {
+        titleInputRef.current.focus();
+      }
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [todo]);
+
   return (
     <View style={[styles.container, { paddingTop: (insets.top || 0) + 12 }]}>
       <KeyboardAvoidingView
         style={styles.keyboardAvoidingView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false} contentInset={{ bottom: (insets.bottom || 0) + 100 }}>
+        <ScrollView 
+          style={styles.scrollView} 
+          showsVerticalScrollIndicator={false} 
+          contentInset={{ bottom: (insets.bottom || 0) + 100 }}
+          keyboardShouldPersistTaps="handled"
+          onScrollBeginDrag={() => Keyboard.dismiss()}
+        >
           <View style={styles.header}>
             <Text style={styles.headerTitle}>
               {todo ? 'Edit Task' : 'Add New Task'}
@@ -229,12 +250,15 @@ export const TodoForm: React.FC<TodoFormProps> = ({
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Title *</Text>
               <TextInput
+                ref={titleInputRef}
                 style={[styles.input, titleError && styles.inputError]}
                 value={title}
                 onChangeText={setTitle}
                 placeholder="Enter task title"
                 placeholderTextColor={colors.textSecondary}
                 maxLength={100}
+                returnKeyType="next"
+                blurOnSubmit={false}
               />
               {titleError && <Text style={styles.errorText}>{titleError}</Text>}
             </View>

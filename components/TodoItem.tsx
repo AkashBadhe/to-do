@@ -57,6 +57,7 @@ interface TodoItemProps {
   onEdit: (todo: Todo) => void;
   onDelete: (id: string) => void;
   isDark: boolean;
+  showCategory?: boolean; // Only show category when viewing all tasks
 }
 
 export const TodoItem: React.FC<TodoItemProps> = ({
@@ -65,6 +66,7 @@ export const TodoItem: React.FC<TodoItemProps> = ({
   onEdit,
   onDelete,
   isDark,
+  showCategory = true, // Default to true for backward compatibility
 }) => {
   const colors = isDark ? Colors.dark : Colors.light;
   const styles = createStyles(colors);
@@ -134,7 +136,7 @@ export const TodoItem: React.FC<TodoItemProps> = ({
             {todo.description}
           </Text>
         )}
-        {todo.category && (
+        {todo.category && showCategory && (
           <View style={styles.categoryBadge}>
             <Ionicons name={getCategoryIcon(todo.category)} size={12} color={colors.primary} />
             <Text style={[styles.categoryText, { color: colors.primary }]}>

@@ -14,7 +14,7 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const AppThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const system = useSystemColorScheme();
-  const [settings, setSettings] = useState<AppSettings>({ colorScheme: 'auto' });
+  const [settings, setSettings] = useState<AppSettings>({ colorScheme: 'dark' });
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {

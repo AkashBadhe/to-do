@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Dimensions,
   FlatList,
@@ -15,11 +15,13 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { OnboardingGuide } from '@/components/OnboardingGuide';
 import { TodoItem } from '@/components/TodoItem';
 import { DEFAULT_CATEGORIES } from '@/constants/Categories';
 import { Colors } from '@/constants/Colors';
 import { useTheme } from '@/hooks/ThemeContext';
 import { useTodos } from '@/hooks/useTodos';
+import { OnboardingService } from '@/services/OnboardingService';
 import { Todo } from '@/types/Todo';
 
 export default function TodoListScreen() {
@@ -43,7 +45,33 @@ export default function TodoListScreen() {
   const insets = useSafeAreaInsets();
 
   const [refreshing, setRefreshing] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const flatListRef = useRef<FlatList>(null);
+
+  // Check if user has seen onboarding
+  useEffect(() => {
+    const checkOnboardingStatus = async () => {
+      const hasSeenOnboarding = await OnboardingService.hasSeenOnboarding();
+      if (!hasSeenOnboarding && totalTodos === 0) {
+        setShowOnboarding(true);
+      }
+    };
+    
+    if (!isLoading) {
+      checkOnboardingStatus();
+    }
+  }, [isLoading, totalTodos]);
+
+  const handleOnboardingComplete = async () => {
+    await OnboardingService.markOnboardingComplete();
+    setShowOnboarding(false);
+  };
+
+  // For testing: Add a way to reset onboarding (can be removed in production)
+  const resetOnboarding = async () => {
+    await OnboardingService.resetOnboarding();
+    setShowOnboarding(true);
+  };
 
   // Scroll to top when switching to empty list or changing filters
   React.useEffect(() => {
@@ -145,6 +173,7 @@ export default function TodoListScreen() {
       onEdit={handleEdit}
       onDelete={deleteTodo}
       isDark={isDark}
+      showCategory={!currentCategory} // Only show category when viewing "All" tasks
     />
   );
 
@@ -223,6 +252,13 @@ export default function TodoListScreen() {
             }
           </Text>
         </View>
+        {/* Debug button to show onboarding */}
+        <TouchableOpacity
+          style={styles.debugButton}
+          onPress={resetOnboarding}
+        >
+          <Ionicons name="help-circle-outline" size={24} color={colors.text} />
+        </TouchableOpacity>
       </View>
 
       {/* Category Selector */}
@@ -310,6 +346,15 @@ export default function TodoListScreen() {
         </TouchableOpacity>
       )}
 
+      {/* Onboarding Guide */}
+      {showOnboarding && (
+        <OnboardingGuide
+          visible={showOnboarding}
+          onComplete={handleOnboardingComplete}
+          isDark={isDark}
+        />
+      )}
+
     </View>
   );
 }
@@ -329,6 +374,11 @@ const createStyles = (colors: typeof Colors.light) =>
       paddingBottom: 16,
       borderBottomWidth: 1,
       borderBottomColor: colors.border,
+    },
+    debugButton: {
+      padding: 8,
+      borderRadius: 8,
+      backgroundColor: colors.surface,
     },
     headerTitle: {
       fontSize: 28,

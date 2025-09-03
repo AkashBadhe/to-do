@@ -1,13 +1,14 @@
 export const DEFAULT_CATEGORIES = [
   'Personal',
-  'Work / Office',
-  'Shopping / Groceries',
-  'Health & Fitness',
-  'Finance / Bills',
-  'Family / Home',
-  'Study / Learning',
-  'Travel / Plans',
-  'Important / Priority',
+  'Work',
+  'Shopping',
+  'Grocery',
+  'Health',
+  'Finance',
+  'Family',
+  'Learning',
+  'Travel',
+  'Priority',
 ] as const;
 
 export const DEFAULT_CATEGORY = 'Personal';
