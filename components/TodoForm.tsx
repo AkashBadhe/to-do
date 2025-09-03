@@ -77,6 +77,9 @@ export const TodoForm: React.FC<TodoFormProps> = ({
   const colors = isDark ? Colors.dark : Colors.light;
   const styles = createStyles(colors);
   const titleInputRef = useRef<TextInput>(null);
+  const descriptionInputRef = useRef<TextInput>(null);
+  const customIntervalInputRef = useRef<TextInput>(null);
+  const newCategoryInputRef = useRef<TextInput>(null);
 
   const [title, setTitle] = useState(todo?.title || '');
   const [description, setDescription] = useState(todo?.description || '');
@@ -259,6 +262,7 @@ export const TodoForm: React.FC<TodoFormProps> = ({
                 maxLength={100}
                 returnKeyType="next"
                 blurOnSubmit={false}
+                onSubmitEditing={() => descriptionInputRef.current?.focus()}
               />
               {titleError && <Text style={styles.errorText}>{titleError}</Text>}
             </View>
@@ -266,6 +270,7 @@ export const TodoForm: React.FC<TodoFormProps> = ({
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Description</Text>
               <TextInput
+                ref={descriptionInputRef}
                 style={[styles.input, styles.textArea]}
                 value={description}
                 onChangeText={setDescription}
@@ -274,6 +279,8 @@ export const TodoForm: React.FC<TodoFormProps> = ({
                 multiline
                 numberOfLines={4}
                 maxLength={500}
+                returnKeyType="default"
+                blurOnSubmit={false}
               />
             </View>
 
@@ -358,6 +365,7 @@ export const TodoForm: React.FC<TodoFormProps> = ({
                 <View style={styles.inputGroup}>
                   <Text style={styles.label}>Custom Interval (days)</Text>
                   <TextInput
+                    ref={customIntervalInputRef}
                     style={styles.input}
                     value={customInterval.toString()}
                     onChangeText={(text) => {
@@ -369,6 +377,8 @@ export const TodoForm: React.FC<TodoFormProps> = ({
                     placeholder="Enter number of days"
                     placeholderTextColor={colors.textSecondary}
                     keyboardType="numeric"
+                    returnKeyType="done"
+                    onSubmitEditing={() => Keyboard.dismiss()}
                   />
                 </View>
               )}
@@ -664,12 +674,15 @@ export const TodoForm: React.FC<TodoFormProps> = ({
               <View style={styles.addCategorySection}>
                 <Text style={[styles.addCategoryLabel, { color: colors.text }]}>Add New Category</Text>
                 <TextInput
+                  ref={newCategoryInputRef}
                   style={styles.addCategoryInput}
                   value={newCategoryText}
                   onChangeText={setNewCategoryText}
                   placeholder="Enter new category name"
                   placeholderTextColor={colors.textSecondary}
                   maxLength={50}
+                  returnKeyType="done"
+                  onSubmitEditing={() => Keyboard.dismiss()}
                 />
               </View>
             </ScrollView>
