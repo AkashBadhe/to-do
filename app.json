@@ -18,7 +18,14 @@
       },
       "edgeToEdgeEnabled": true,
       "package": "com.timebox.todo",
-      "versionCode": 1
+      "versionCode": 1,
+      "permissions": [
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.WAKE_LOCK",
+        "android.permission.VIBRATE",
+        "android.permission.USE_FULL_SCREEN_INTENT",
+        "android.permission.SYSTEM_ALERT_WINDOW"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -33,7 +40,8 @@
           "icon": "./assets/images/icon.png",
           "color": "#ffffff",
           "androidMode": "default",
-          "androidCollapsedTitle": "#{unread_notifications} new interactions"
+          "androidCollapsedTitle": "#{unread_notifications} new interactions",
+          "sounds": ["./assets/sounds/notification.wav"]
         }
       ],
       [

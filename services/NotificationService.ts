@@ -7,7 +7,7 @@ Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
     shouldPlaySound: true,
-    shouldSetBadge: false,
+    shouldSetBadge: true,
     shouldShowBanner: true,
     shouldShowList: true,
   }),
@@ -21,33 +21,58 @@ export class NotificationService {
         return false;
       }
 
+      // Request all necessary permissions
       const { status: existingStatus } = await Notifications.getPermissionsAsync();
       let finalStatus = existingStatus;
 
       if (existingStatus !== 'granted') {
-        const { status } = await Notifications.requestPermissionsAsync();
+        const { status } = await Notifications.requestPermissionsAsync({
+          ios: {
+            allowAlert: true,
+            allowBadge: true,
+            allowSound: true,
+            allowDisplayInCarPlay: true,
+            allowCriticalAlerts: true,
+            provideAppNotificationSettings: true,
+            allowProvisional: true,
+          },
+          android: {
+            allowAlert: true,
+            allowBadge: true,
+            allowSound: true,
+          },
+        });
         finalStatus = status;
       }
 
       if (finalStatus !== 'granted') {
-        console.log('Failed to get push token for push notification!');
+        console.log('❌ Notification permission denied!');
         return false;
       }
 
-      // For Android, set the notification channel
+      console.log('✅ Notification permissions granted');
+
+      // For Android, set up a high-priority notification channel
       if (Platform.OS === 'android') {
-        await Notifications.setNotificationChannelAsync('default', {
-          name: 'default',
+        await Notifications.setNotificationChannelAsync('task-reminders', {
+          name: 'Task Reminders',
           importance: Notifications.AndroidImportance.MAX,
           vibrationPattern: [0, 250, 250, 250],
           lightColor: '#FF231F7C',
           sound: 'default',
+          enableLights: true,
+          enableVibrate: true,
+          showBadge: true,
+          lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+          bypassDnd: true,
         });
+
+        console.log('✅ Android notification channel created');
       }
 
       return true;
     } catch (error) {
-      console.error('Error requesting notification permissions:', error);
+      console.error('❌ Error requesting notification permissions:', error);
       return false;
     }
   }
@@ -59,33 +84,98 @@ export class NotificationService {
     scheduledTime: Date
   ): Promise<string | null> {
     try {
+      console.log('🔄 Scheduling notification:', {
+        todoId,
+        title,
+        scheduledTime: scheduledTime.toISOString(),
+        currentTime: new Date().toISOString(),
+        timeUntilNotification: Math.floor((scheduledTime.getTime() - Date.now()) / 1000 / 60),
+      });
+
       const hasPermission = await this.requestPermissions();
       if (!hasPermission) {
+        console.log('❌ Permission not granted');
         return null;
       }
 
       // Cancel any existing notification for this todo
       await this.cancelNotification(todoId);
 
+      // Check if the scheduled time is in the future
+      if (scheduledTime <= new Date()) {
+        console.log('⚠️ Scheduled time is in the past, adjusting to 30 seconds from now for testing...');
+        scheduledTime = new Date(Date.now() + 30000); // 30 seconds from now for testing
+      }
+
+      const notificationContent = {
+        title: '⏰ Task Reminder',
+        body: `${title}${body ? `\n${body}` : ''}`,
+        sound: true,
+        priority: Notifications.AndroidNotificationPriority.MAX,
+        sticky: false,
+        autoDismiss: false,
+        data: { 
+          todoId,
+          type: 'task-reminder',
+          actions: ['snooze', 'complete', 'dismiss']
+        },
+        categoryIdentifier: 'task-reminder',
+      };
+
+      // Add action buttons for iOS
+      if (Platform.OS === 'ios') {
+        await Notifications.setNotificationCategoryAsync('task-reminder', [
+          {
+            identifier: 'snooze',
+            buttonTitle: 'Snooze 5min',
+            options: {
+              opensAppToForeground: false,
+            },
+          },
+          {
+            identifier: 'complete',
+            buttonTitle: 'Mark Complete',
+            options: {
+              opensAppToForeground: false,
+            },
+          },
+          {
+            identifier: 'dismiss',
+            buttonTitle: 'Dismiss',
+            options: {
+              opensAppToForeground: false,
+            },
+          },
+        ]);
+      }
+
       const notificationId = await Notifications.scheduleNotificationAsync({
-        content: {
-          title: 'Task Reminder',
-          body: `${title}${body ? ` - ${body}` : ''}`,
-          sound: true, // Use default system sound
-          priority: Notifications.AndroidNotificationPriority.HIGH,
-          data: { todoId },
-        },
+        content: notificationContent,
         trigger: {
-          date: scheduledTime,
-          channelId: 'default',
+          seconds: Math.max(1, Math.floor((scheduledTime.getTime() - Date.now()) / 1000)),
         },
-        identifier: todoId, // Use todoId as identifier for easy cancellation
+        identifier: todoId,
       });
 
-      console.log('Notification scheduled:', { notificationId, scheduledTime });
+      // For immediate testing, use presentNotificationAsync
+      if (scheduledTime <= new Date(Date.now() + 60000)) {
+        console.log('⚡ Presenting notification immediately for testing');
+        await Notifications.presentNotificationAsync({
+          title: notificationContent.title,
+          body: notificationContent.body,
+          data: notificationContent.data,
+        });
+      }
+
+      console.log('✅ Notification scheduled successfully:', {
+        notificationId,
+        scheduledTime: scheduledTime.toISOString(),
+        channelId: Platform.OS === 'android' ? 'task-reminders' : 'default'
+      });
+
       return notificationId;
     } catch (error) {
-      console.error('Error scheduling notification:', error);
+      console.error('❌ Error scheduling notification:', error);
       return null;
     }
   }
