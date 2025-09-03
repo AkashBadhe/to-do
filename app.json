@@ -2,7 +2,7 @@
   "expo": {
     "name": "Time Box",
     "slug": "time-box",
-    "version": "1.0.3",
+    "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "todo",
@@ -17,8 +17,8 @@
         "backgroundColor": "#040404"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.yourdomain.todo",
-      "versionCode": 5
+      "package": "com.timebox.todo",
+      "versionCode": 1
     },
     "web": {
       "bundler": "metro",
