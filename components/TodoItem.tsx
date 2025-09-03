@@ -228,7 +228,8 @@ const createStyles = (colors: ThemeColors) =>
       }),
     },
     completedContainer: {
-      opacity: 0.7,
+      backgroundColor: colors.successLight, // Use the new successLight color
+      borderColor: colors.success + '40', // Subtle green border
     },
     checkboxContainer: {
       marginRight: 12,
@@ -272,7 +273,7 @@ const createStyles = (colors: ThemeColors) =>
     },
     completedText: {
       textDecorationLine: 'line-through',
-      opacity: 0.6,
+      color: colors.textMuted, // Use the new textMuted color for better readability
     },
     actions: {
       flexDirection: 'row',
