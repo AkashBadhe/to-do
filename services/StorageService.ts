@@ -74,6 +74,7 @@ class StorageService {
       dueDate: todo.dueDate?.toISOString(),
       recurrence: todo.recurrence || 'none',
       endDate: todo.endDate?.toISOString(),
+      category: todo.category || '',
       createdAt: todo.createdAt.toISOString(),
       updatedAt: todo.updatedAt.toISOString(),
     })));
@@ -92,6 +93,7 @@ class StorageService {
         recurrence: todo.recurrence || 'none',
         endDate: todo.endDate ? new Date(todo.endDate) : undefined,
         hasReminder: todo.hasReminder || false,
+        category: todo.category || '',
         createdAt: new Date(todo.createdAt),
         updatedAt: new Date(todo.updatedAt),
       }));
@@ -115,12 +117,12 @@ class StorageService {
     try {
       const settingsJson = await this.getItem(this.SETTINGS_KEY);
       if (!settingsJson) {
-        return { colorScheme: 'auto' };
+        return { colorScheme: 'dark' };
       }
       return JSON.parse(settingsJson);
     } catch (error) {
       console.error('Failed to load settings:', error);
-      return { colorScheme: 'auto' };
+      return { colorScheme: 'dark' };
     }
   }
 }

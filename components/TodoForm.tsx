@@ -1,6 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useEffect, useState } from 'react';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import React, { useEffect, useRef, useState } from 'react';
 import {
+  Keyboard,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -12,8 +14,23 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { DEFAULT_CATEGORIES, DEFAULT_CATEGORY } from '../constants/Categories';
 import { Colors, ThemeColors } from '../constants/Colors';
 import { Todo, TodoPriority, TodoRecurrence } from '../types/Todo';
+
+const getCategoryIcon = (category: string): keyof typeof Ionicons.glyphMap => {
+  const lowerCategory = category.toLowerCase();
+  if (lowerCategory.includes('work') || lowerCategory.includes('office')) return 'briefcase';
+  if (lowerCategory.includes('personal')) return 'person';
+  if (lowerCategory.includes('shopping') || lowerCategory.includes('groceries')) return 'basket';
+  if (lowerCategory.includes('health') || lowerCategory.includes('fitness')) return 'fitness';
+  if (lowerCategory.includes('finance') || lowerCategory.includes('bills')) return 'card';
+  if (lowerCategory.includes('family') || lowerCategory.includes('home')) return 'home';
+  if (lowerCategory.includes('study') || lowerCategory.includes('learning')) return 'school';
+  if (lowerCategory.includes('travel') || lowerCategory.includes('plans')) return 'airplane';
+  if (lowerCategory.includes('important') || lowerCategory.includes('priority')) return 'star';
+  return 'folder-outline';
+};
 
 const getPriorityIcon = (priority: TodoPriority): keyof typeof Ionicons.glyphMap => {
   switch (priority) {
@@ -46,6 +63,7 @@ interface TodoFormProps {
   onSave: (todo: Omit<Todo, 'id' | 'createdAt' | 'updatedAt'>) => void;
   onCancel: () => void;
   isDark: boolean;
+  defaultCategory?: string;
 }
 
 export const TodoForm: React.FC<TodoFormProps> = ({
@@ -53,13 +71,21 @@ export const TodoForm: React.FC<TodoFormProps> = ({
   onSave,
   onCancel,
   isDark,
+  defaultCategory,
 }) => {
   const insets = useSafeAreaInsets();
   const colors = isDark ? Colors.dark : Colors.light;
   const styles = createStyles(colors);
+  const titleInputRef = useRef<TextInput>(null);
+  const descriptionInputRef = useRef<TextInput>(null);
+  const customIntervalInputRef = useRef<TextInput>(null);
+  const newCategoryInputRef = useRef<TextInput>(null);
 
   const [title, setTitle] = useState(todo?.title || '');
   const [description, setDescription] = useState(todo?.description || '');
+  const [category, setCategory] = useState(todo?.category || defaultCategory || (!todo ? DEFAULT_CATEGORY : ''));
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [newCategoryText, setNewCategoryText] = useState('');
   const [dueDate, setDueDate] = useState<Date | undefined>(
     todo ? (todo.dueDate ? new Date(todo.dueDate) : undefined) : new Date()
   );
@@ -70,6 +96,7 @@ export const TodoForm: React.FC<TodoFormProps> = ({
   const [endDate, setEndDate] = useState<Date | undefined>(todo?.endDate);
   const [hasReminder, setHasReminder] = useState<boolean>(todo?.hasReminder || false);
   const [reminderTime, setReminderTime] = useState<string>(todo?.reminderTime || '09:00');
+  const [showTimePicker, setShowTimePicker] = useState(false);
   const [titleError, setTitleError] = useState('');
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [tempDate, setTempDate] = useState<Date>(new Date());
@@ -86,15 +113,46 @@ export const TodoForm: React.FC<TodoFormProps> = ({
     });
   };
 
+  const formatTime = (timeString: string) => {
+    const [hours, minutes] = timeString.split(':').map(Number);
+    const date = new Date();
+    date.setHours(hours, minutes);
+    return date.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
+  };
+
+  const createTimeFromString = (timeString: string): Date => {
+    const [hours, minutes] = timeString.split(':').map(Number);
+    const date = new Date();
+    date.setHours(hours, minutes, 0, 0);
+    return date;
+  };
+
+  const onTimeChange = (event: any, selectedTime?: Date) => {
+    setShowTimePicker(Platform.OS === 'ios');
+    if (selectedTime) {
+      const hours = selectedTime.getHours().toString().padStart(2, '0');
+      const minutes = selectedTime.getMinutes().toString().padStart(2, '0');
+      setReminderTime(`${hours}:${minutes}`);
+    }
+  };
+
   const handleSave = () => {
     if (!title.trim()) {
       setTitleError('Title is required');
       return;
     }
 
+    // Dismiss keyboard before saving
+    Keyboard.dismiss();
+
     onSave({
       title: title.trim(),
       description: description.trim(),
+      category: category.trim() || undefined,
       dueDate,
       priority,
       recurrence: isRepeat ? recurrence : 'none',
@@ -138,11 +196,39 @@ export const TodoForm: React.FC<TodoFormProps> = ({
     setDueDate(undefined);
   };
 
+  const selectCategory = (selectedCategory: string) => {
+    setCategory(selectedCategory);
+    setShowCategoryModal(false);
+  };
+
+  const addNewCategory = () => {
+    if (newCategoryText.trim()) {
+      setCategory(newCategoryText.trim());
+      setNewCategoryText('');
+      setShowCategoryModal(false);
+    }
+  };
+
+  const clearCategory = () => {
+    setCategory('');
+    setShowCategoryModal(false);
+  };
+
   useEffect(() => {
     if (title.trim()) {
       setTitleError('');
     }
   }, [title]);
+
+  // Auto-focus title input when component mounts
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (titleInputRef.current && !todo) {
+        titleInputRef.current.focus();
+      }
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [todo]);
 
   return (
     <View style={[styles.container, { paddingTop: (insets.top || 0) + 12 }]}>
@@ -150,7 +236,13 @@ export const TodoForm: React.FC<TodoFormProps> = ({
         style={styles.keyboardAvoidingView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false} contentInset={{ bottom: (insets.bottom || 0) + 100 }}>
+        <ScrollView 
+          style={styles.scrollView} 
+          showsVerticalScrollIndicator={false} 
+          contentInset={{ bottom: (insets.bottom || 0) + 100 }}
+          keyboardShouldPersistTaps="handled"
+          onScrollBeginDrag={() => Keyboard.dismiss()}
+        >
           <View style={styles.header}>
             <Text style={styles.headerTitle}>
               {todo ? 'Edit Task' : 'Add New Task'}
@@ -161,12 +253,16 @@ export const TodoForm: React.FC<TodoFormProps> = ({
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Title *</Text>
               <TextInput
+                ref={titleInputRef}
                 style={[styles.input, titleError && styles.inputError]}
                 value={title}
                 onChangeText={setTitle}
                 placeholder="Enter task title"
                 placeholderTextColor={colors.textSecondary}
                 maxLength={100}
+                returnKeyType="next"
+                blurOnSubmit={false}
+                onSubmitEditing={() => descriptionInputRef.current?.focus()}
               />
               {titleError && <Text style={styles.errorText}>{titleError}</Text>}
             </View>
@@ -174,6 +270,7 @@ export const TodoForm: React.FC<TodoFormProps> = ({
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Description</Text>
               <TextInput
+                ref={descriptionInputRef}
                 style={[styles.input, styles.textArea]}
                 value={description}
                 onChangeText={setDescription}
@@ -182,7 +279,23 @@ export const TodoForm: React.FC<TodoFormProps> = ({
                 multiline
                 numberOfLines={4}
                 maxLength={500}
+                returnKeyType="default"
+                blurOnSubmit={false}
               />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Category</Text>
+              <TouchableOpacity
+                style={styles.categoryButton}
+                onPress={() => setShowCategoryModal(true)}
+              >
+                <Ionicons name={category ? getCategoryIcon(category) : 'folder-outline'} size={20} color={colors.primary} />
+                <Text style={[styles.categoryButtonText, { color: category ? colors.text : colors.textSecondary }]}>
+                  {category || 'Select category'}
+                </Text>
+                <Ionicons name="chevron-down" size={16} color={colors.textSecondary} />
+              </TouchableOpacity>
             </View>
 
             <View style={styles.inputGroup}>
@@ -252,6 +365,7 @@ export const TodoForm: React.FC<TodoFormProps> = ({
                 <View style={styles.inputGroup}>
                   <Text style={styles.label}>Custom Interval (days)</Text>
                   <TextInput
+                    ref={customIntervalInputRef}
                     style={styles.input}
                     value={customInterval.toString()}
                     onChangeText={(text) => {
@@ -263,6 +377,8 @@ export const TodoForm: React.FC<TodoFormProps> = ({
                     placeholder="Enter number of days"
                     placeholderTextColor={colors.textSecondary}
                     keyboardType="numeric"
+                    returnKeyType="done"
+                    onSubmitEditing={() => Keyboard.dismiss()}
                   />
                 </View>
               )}
@@ -344,13 +460,16 @@ export const TodoForm: React.FC<TodoFormProps> = ({
                 <Text style={styles.switchLabel}>Enable reminder</Text>
               </View>
               {hasReminder && (
-                <TextInput
-                  style={styles.input}
-                  value={reminderTime}
-                  onChangeText={setReminderTime}
-                  placeholder="HH:MM"
-                  placeholderTextColor={colors.textSecondary}
-                />
+                <TouchableOpacity
+                  style={styles.timePickerButton}
+                  onPress={() => setShowTimePicker(true)}
+                >
+                  <Ionicons name="time-outline" size={20} color={colors.primary} />
+                  <Text style={styles.timePickerText}>
+                    {formatTime(reminderTime)}
+                  </Text>
+                  <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
+                </TouchableOpacity>
               )}
             </View>
           </View>
@@ -515,6 +634,99 @@ export const TodoForm: React.FC<TodoFormProps> = ({
           </View>
         </View>
       </Modal>
+
+      {/* Category Selection Modal */}
+      <Modal
+        visible={showCategoryModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowCategoryModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: colors.text }]}>Select Category</Text>
+            </View>
+
+            <ScrollView style={styles.categoryScrollView} showsVerticalScrollIndicator={false}>
+              <View style={styles.categoryGrid}>
+                {DEFAULT_CATEGORIES.map((cat) => (
+                  <TouchableOpacity
+                    key={cat}
+                    style={[
+                      styles.categoryOption,
+                      category === cat && styles.categoryOptionSelected,
+                      { backgroundColor: category === cat ? colors.primary : colors.surface }
+                    ]}
+                    onPress={() => selectCategory(cat)}
+                  >
+                    <Ionicons name={getCategoryIcon(cat)} size={16} color={category === cat ? colors.background : colors.primary} />
+                    <Text style={[
+                      styles.categoryOptionText,
+                      { color: category === cat ? colors.background : colors.text }
+                    ]}>
+                      {cat}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <View style={styles.addCategorySection}>
+                <Text style={[styles.addCategoryLabel, { color: colors.text }]}>Add New Category</Text>
+                <TextInput
+                  ref={newCategoryInputRef}
+                  style={styles.addCategoryInput}
+                  value={newCategoryText}
+                  onChangeText={setNewCategoryText}
+                  placeholder="Enter new category name"
+                  placeholderTextColor={colors.textSecondary}
+                  maxLength={50}
+                  returnKeyType="done"
+                  onSubmitEditing={() => Keyboard.dismiss()}
+                />
+              </View>
+            </ScrollView>
+
+            <View style={styles.categoryModalActions}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelModalButton, { borderColor: colors.border }]}
+                onPress={() => setShowCategoryModal(false)}
+              >
+                <Text style={[styles.modalButtonText, { color: colors.text }]}>Cancel</Text>
+              </TouchableOpacity>
+
+              {newCategoryText.trim() && (
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.confirmModalButton, { backgroundColor: colors.primary }]}
+                  onPress={addNewCategory}
+                >
+                  <Text style={[styles.modalButtonText, { color: colors.background }]}>Add Category</Text>
+                </TouchableOpacity>
+              )}
+
+              {category && (
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.clearModalButton, { borderColor: colors.error }]}
+                  onPress={clearCategory}
+                >
+                  <Text style={[styles.modalButtonText, { color: colors.error }]}>Clear</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Time Picker */}
+      {showTimePicker && (
+        <DateTimePicker
+          value={createTimeFromString(reminderTime)}
+          mode="time"
+          is24Hour={false}
+          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+          onChange={onTimeChange}
+        />
+      )}
     </View>
   );
 };
@@ -741,6 +953,7 @@ const createStyles = (colors: ThemeColors) =>
       padding: 16,
       borderRadius: 12,
       alignItems: 'center',
+      minWidth: 100,
     },
     cancelModalButton: {
       backgroundColor: 'transparent',
@@ -841,6 +1054,95 @@ const createStyles = (colors: ThemeColors) =>
       transform: [{ translateX: 22 }],
     },
     switchLabel: {
+      fontSize: 16,
+      color: colors.text,
+      marginLeft: 12,
+    },
+    categoryButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: 16,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 12,
+      backgroundColor: colors.surface,
+    },
+    categoryButtonText: {
+      flex: 1,
+      fontSize: 16,
+      color: colors.text,
+      marginLeft: 12,
+    },
+    categoryScrollView: {
+      maxHeight: 300,
+    },
+    categoryGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 8,
+      marginBottom: 20,
+    },
+    categoryOption: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      borderRadius: 20,
+      borderWidth: 1,
+      borderColor: colors.border,
+      minWidth: '45%',
+      marginBottom: 8,
+    },
+    categoryOptionSelected: {
+      borderColor: colors.primary,
+    },
+    categoryOptionText: {
+      fontSize: 14,
+      fontWeight: '500',
+      marginLeft: 8,
+    },
+    addCategorySection: {
+      marginTop: 20,
+      paddingTop: 20,
+      borderTopWidth: 1,
+      borderTopColor: colors.border,
+    },
+    addCategoryLabel: {
+      fontSize: 16,
+      fontWeight: '600',
+      marginBottom: 12,
+    },
+    addCategoryInput: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 12,
+      padding: 16,
+      fontSize: 16,
+      color: colors.text,
+      backgroundColor: colors.surface,
+    },
+    categoryModalActions: {
+      flexDirection: 'row',
+      gap: 8,
+      marginTop: 20,
+      flexWrap: 'wrap',
+    },
+    clearModalButton: {
+      backgroundColor: 'transparent',
+      borderWidth: 1,
+    },
+    timePickerButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: 16,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 12,
+      backgroundColor: colors.surface,
+      marginTop: 8,
+    },
+    timePickerText: {
+      flex: 1,
       fontSize: 16,
       color: colors.text,
       marginLeft: 12,
