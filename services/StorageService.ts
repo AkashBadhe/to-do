@@ -117,12 +117,12 @@ class StorageService {
     try {
       const settingsJson = await this.getItem(this.SETTINGS_KEY);
       if (!settingsJson) {
-        return { colorScheme: 'auto' };
+        return { colorScheme: 'dark' };
       }
       return JSON.parse(settingsJson);
     } catch (error) {
       console.error('Failed to load settings:', error);
-      return { colorScheme: 'auto' };
+      return { colorScheme: 'dark' };
     }
   }
 }

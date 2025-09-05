@@ -2,7 +2,7 @@
   "expo": {
     "name": "Time Box",
     "slug": "time-box",
-    "version": "1.0.3",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "todo",
@@ -17,8 +17,15 @@
         "backgroundColor": "#040404"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.yourdomain.todo",
-      "versionCode": 5
+      "package": "com.timebox.todo",
+      "versionCode": 2,
+      "permissions": [
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.WAKE_LOCK",
+        "android.permission.VIBRATE",
+        "android.permission.USE_FULL_SCREEN_INTENT",
+        "android.permission.SYSTEM_ALERT_WINDOW"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -27,6 +34,15 @@
     },
     "plugins": [
       "expo-router",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/icon.png",
+          "color": "#ffffff",
+          "androidMode": "default",
+          "androidCollapsedTitle": "#{unread_notifications} new interactions"
+        }
+      ],
       [
         "expo-splash-screen",
         {

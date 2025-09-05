@@ -57,6 +57,7 @@ interface TodoItemProps {
   onEdit: (todo: Todo) => void;
   onDelete: (id: string) => void;
   isDark: boolean;
+  showCategory?: boolean; // Only show category when viewing all tasks
 }
 
 export const TodoItem: React.FC<TodoItemProps> = ({
@@ -65,6 +66,7 @@ export const TodoItem: React.FC<TodoItemProps> = ({
   onEdit,
   onDelete,
   isDark,
+  showCategory = true, // Default to true for backward compatibility
 }) => {
   const colors = isDark ? Colors.dark : Colors.light;
   const styles = createStyles(colors);
@@ -134,7 +136,7 @@ export const TodoItem: React.FC<TodoItemProps> = ({
             {todo.description}
           </Text>
         )}
-        {todo.category && (
+        {todo.category && showCategory && (
           <View style={styles.categoryBadge}>
             <Ionicons name={getCategoryIcon(todo.category)} size={12} color={colors.primary} />
             <Text style={[styles.categoryText, { color: colors.primary }]}>
@@ -226,7 +228,8 @@ const createStyles = (colors: ThemeColors) =>
       }),
     },
     completedContainer: {
-      opacity: 0.7,
+      backgroundColor: colors.successLight, // Use the new successLight color
+      borderColor: colors.success + '40', // Subtle green border
     },
     checkboxContainer: {
       marginRight: 12,
@@ -270,7 +273,7 @@ const createStyles = (colors: ThemeColors) =>
     },
     completedText: {
       textDecorationLine: 'line-through',
-      opacity: 0.6,
+      color: colors.textMuted, // Use the new textMuted color for better readability
     },
     actions: {
       flexDirection: 'row',

@@ -1,6 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useEffect, useState } from 'react';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import React, { useEffect, useRef, useState } from 'react';
 import {
+  Keyboard,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -74,6 +76,10 @@ export const TodoForm: React.FC<TodoFormProps> = ({
   const insets = useSafeAreaInsets();
   const colors = isDark ? Colors.dark : Colors.light;
   const styles = createStyles(colors);
+  const titleInputRef = useRef<TextInput>(null);
+  const descriptionInputRef = useRef<TextInput>(null);
+  const customIntervalInputRef = useRef<TextInput>(null);
+  const newCategoryInputRef = useRef<TextInput>(null);
 
   const [title, setTitle] = useState(todo?.title || '');
   const [description, setDescription] = useState(todo?.description || '');
@@ -90,6 +96,7 @@ export const TodoForm: React.FC<TodoFormProps> = ({
   const [endDate, setEndDate] = useState<Date | undefined>(todo?.endDate);
   const [hasReminder, setHasReminder] = useState<boolean>(todo?.hasReminder || false);
   const [reminderTime, setReminderTime] = useState<string>(todo?.reminderTime || '09:00');
+  const [showTimePicker, setShowTimePicker] = useState(false);
   const [titleError, setTitleError] = useState('');
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [tempDate, setTempDate] = useState<Date>(new Date());
@@ -106,11 +113,41 @@ export const TodoForm: React.FC<TodoFormProps> = ({
     });
   };
 
+  const formatTime = (timeString: string) => {
+    const [hours, minutes] = timeString.split(':').map(Number);
+    const date = new Date();
+    date.setHours(hours, minutes);
+    return date.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
+  };
+
+  const createTimeFromString = (timeString: string): Date => {
+    const [hours, minutes] = timeString.split(':').map(Number);
+    const date = new Date();
+    date.setHours(hours, minutes, 0, 0);
+    return date;
+  };
+
+  const onTimeChange = (event: any, selectedTime?: Date) => {
+    setShowTimePicker(Platform.OS === 'ios');
+    if (selectedTime) {
+      const hours = selectedTime.getHours().toString().padStart(2, '0');
+      const minutes = selectedTime.getMinutes().toString().padStart(2, '0');
+      setReminderTime(`${hours}:${minutes}`);
+    }
+  };
+
   const handleSave = () => {
     if (!title.trim()) {
       setTitleError('Title is required');
       return;
     }
+
+    // Dismiss keyboard before saving
+    Keyboard.dismiss();
 
     onSave({
       title: title.trim(),
@@ -183,13 +220,29 @@ export const TodoForm: React.FC<TodoFormProps> = ({
     }
   }, [title]);
 
+  // Auto-focus title input when component mounts
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (titleInputRef.current && !todo) {
+        titleInputRef.current.focus();
+      }
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [todo]);
+
   return (
     <View style={[styles.container, { paddingTop: (insets.top || 0) + 12 }]}>
       <KeyboardAvoidingView
         style={styles.keyboardAvoidingView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false} contentInset={{ bottom: (insets.bottom || 0) + 100 }}>
+        <ScrollView 
+          style={styles.scrollView} 
+          showsVerticalScrollIndicator={false} 
+          contentInset={{ bottom: (insets.bottom || 0) + 100 }}
+          keyboardShouldPersistTaps="handled"
+          onScrollBeginDrag={() => Keyboard.dismiss()}
+        >
           <View style={styles.header}>
             <Text style={styles.headerTitle}>
               {todo ? 'Edit Task' : 'Add New Task'}
@@ -200,12 +253,16 @@ export const TodoForm: React.FC<TodoFormProps> = ({
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Title *</Text>
               <TextInput
+                ref={titleInputRef}
                 style={[styles.input, titleError && styles.inputError]}
                 value={title}
                 onChangeText={setTitle}
                 placeholder="Enter task title"
                 placeholderTextColor={colors.textSecondary}
                 maxLength={100}
+                returnKeyType="next"
+                blurOnSubmit={false}
+                onSubmitEditing={() => descriptionInputRef.current?.focus()}
               />
               {titleError && <Text style={styles.errorText}>{titleError}</Text>}
             </View>
@@ -213,6 +270,7 @@ export const TodoForm: React.FC<TodoFormProps> = ({
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Description</Text>
               <TextInput
+                ref={descriptionInputRef}
                 style={[styles.input, styles.textArea]}
                 value={description}
                 onChangeText={setDescription}
@@ -221,6 +279,8 @@ export const TodoForm: React.FC<TodoFormProps> = ({
                 multiline
                 numberOfLines={4}
                 maxLength={500}
+                returnKeyType="default"
+                blurOnSubmit={false}
               />
             </View>
 
@@ -305,6 +365,7 @@ export const TodoForm: React.FC<TodoFormProps> = ({
                 <View style={styles.inputGroup}>
                   <Text style={styles.label}>Custom Interval (days)</Text>
                   <TextInput
+                    ref={customIntervalInputRef}
                     style={styles.input}
                     value={customInterval.toString()}
                     onChangeText={(text) => {
@@ -316,6 +377,8 @@ export const TodoForm: React.FC<TodoFormProps> = ({
                     placeholder="Enter number of days"
                     placeholderTextColor={colors.textSecondary}
                     keyboardType="numeric"
+                    returnKeyType="done"
+                    onSubmitEditing={() => Keyboard.dismiss()}
                   />
                 </View>
               )}
@@ -397,13 +460,16 @@ export const TodoForm: React.FC<TodoFormProps> = ({
                 <Text style={styles.switchLabel}>Enable reminder</Text>
               </View>
               {hasReminder && (
-                <TextInput
-                  style={styles.input}
-                  value={reminderTime}
-                  onChangeText={setReminderTime}
-                  placeholder="HH:MM"
-                  placeholderTextColor={colors.textSecondary}
-                />
+                <TouchableOpacity
+                  style={styles.timePickerButton}
+                  onPress={() => setShowTimePicker(true)}
+                >
+                  <Ionicons name="time-outline" size={20} color={colors.primary} />
+                  <Text style={styles.timePickerText}>
+                    {formatTime(reminderTime)}
+                  </Text>
+                  <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
+                </TouchableOpacity>
               )}
             </View>
           </View>
@@ -608,12 +674,15 @@ export const TodoForm: React.FC<TodoFormProps> = ({
               <View style={styles.addCategorySection}>
                 <Text style={[styles.addCategoryLabel, { color: colors.text }]}>Add New Category</Text>
                 <TextInput
+                  ref={newCategoryInputRef}
                   style={styles.addCategoryInput}
                   value={newCategoryText}
                   onChangeText={setNewCategoryText}
                   placeholder="Enter new category name"
                   placeholderTextColor={colors.textSecondary}
                   maxLength={50}
+                  returnKeyType="done"
+                  onSubmitEditing={() => Keyboard.dismiss()}
                 />
               </View>
             </ScrollView>
@@ -647,6 +716,17 @@ export const TodoForm: React.FC<TodoFormProps> = ({
           </View>
         </View>
       </Modal>
+
+      {/* Time Picker */}
+      {showTimePicker && (
+        <DateTimePicker
+          value={createTimeFromString(reminderTime)}
+          mode="time"
+          is24Hour={false}
+          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+          onChange={onTimeChange}
+        />
+      )}
     </View>
   );
 };
@@ -1050,5 +1130,21 @@ const createStyles = (colors: ThemeColors) =>
     clearModalButton: {
       backgroundColor: 'transparent',
       borderWidth: 1,
+    },
+    timePickerButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: 16,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 12,
+      backgroundColor: colors.surface,
+      marginTop: 8,
+    },
+    timePickerText: {
+      flex: 1,
+      fontSize: 16,
+      color: colors.text,
+      marginLeft: 12,
     },
   });

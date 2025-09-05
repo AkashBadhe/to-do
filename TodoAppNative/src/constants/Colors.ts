@@ -12,13 +12,11 @@ export const Colors = {
     primaryLight: '#E3F2FD',
     background: '#FFFFFF',
     surface: '#F8F9FA',
-    card: '#F5F7FA',
+    card: '#FFFFFF',
     text: '#1C1C1E',
     textSecondary: '#6C6C70',
-    textMuted: '#8E8E93', // For completed text
     border: '#E5E5EA',
     success: '#34C759',
-    successLight: '#E8F5E8', // Light green background for completed cards
     warning: '#FF9500',
     error: '#FF3B30',
     shadow: '#000000',
@@ -32,13 +30,11 @@ export const Colors = {
     primaryLight: '#1E3A8A',
     background: '#000000',
     surface: '#1C1C1E',
-    card: '#161618ff',
+    card: '#2C2C2E',
     text: '#FFFFFF',
     textSecondary: '#8E8E93',
-    textMuted: '#A8A8AD', // Lighter gray for better contrast on dark green background
     border: '#38383A',
     success: '#34C759',
-    successLight: '#051507ff', // Slightly lighter dark green for better contrast
     warning: '#FF9500',
     error: '#FF453A',
     shadow: '#FFFFFF',
